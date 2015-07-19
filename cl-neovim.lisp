@@ -26,18 +26,16 @@
 
 (defun parse-response (response)
   "Parse the response received from nvim socket."
-    (let* ((msg-id (elt response 1))
-           (err (elt response 2))
-           (err-str (if err (byte-array->string (elt err 1))))
-           (result (elt response 3)))
-      (if err
-        (values NIL msg-id err-str)
-        (values T msg-id result)))) 
+  (let ((msg-id (elt response 1))
+        (err (elt response 2))
+        (result (elt response 3)))
+    (if err
+      (values NIL msg-id (byte-array->string (elt err 1)))
+      (values T msg-id result)))) 
 
 (defun get-result (socket)
   "Wait for response from nvim."
   (let ((*extended-types* *nvim-type-list*))
-    (wait-for-input socket)
     (parse-response (decode-stream (socket-stream socket)))))
 
 (defun command->msg (command &optional args)
@@ -47,6 +45,7 @@
 
 (defun send-command (socket command &rest args)
   "Send nvim command to neovim socket and return the result."
+  (unless *socket* (connect))
   (let ((msg (command->msg command args)))
     (send-msg socket msg)
     (get-result socket)))
