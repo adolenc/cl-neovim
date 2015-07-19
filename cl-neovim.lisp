@@ -4,13 +4,13 @@
 (defparameter *id* 0)
 
 (defun send-msg (socket msg)
-  "Send encoded msg to the socket."
+  "Send encoded msg to nvim."
   (loop for m across msg
         do (write-byte m (socket-stream socket))
         finally (force-output (socket-stream socket))))
 
 (defun parse-response (response)
-  "Parse the result received from nvim socket."
+  "Parse the response received from nvim socket."
     (let* ((response (decode response))
            (msg-id (elt response 1))
            (err (elt response 2))
@@ -21,7 +21,7 @@
         (values T msg-id result)))) 
 
 (defun get-result (socket)
-  "Decode result from the socket."
+  "Wait for response from nvim."
   (let ((buffer (make-array 0 :element-type 'unsigned-byte :adjustable t :fill-pointer t)))
     (wait-for-input socket)
     (loop with byte
@@ -34,7 +34,7 @@
 
 (defun command->msg (command &optional args)
   "Encode nvim command and optional args into msgpack packet."
-  (encode `(0 ,(incf *id*) ,command ,args)))
+  (encode `(0 ,(incf *id*) ,command ,(or args #()))))
 
 (defun send-command (socket command &rest args)
   "Send nvim command to neovim socket and return the result."
@@ -43,6 +43,5 @@
     (get-result socket)))
 
 ; Hello world:
-; (send-command (socket-connect #(127 0 0 1) 7777 :element-type '(unsigned-byte 8))
-;               "vim_command"
-;               "echo 'hello from common lisp!'")
+(send-command (socket-connect #(127 0 0 1) 7777 :element-type '(unsigned-byte 8))
+              "vim_del_current_line")
