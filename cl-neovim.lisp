@@ -8,6 +8,11 @@
                                     Buffer
                                     Window
                                     Tabpage)))
+(defparameter *socket* NIL)
+
+(defun connect (&optional (host #(127 0 0 1)) (port 7777))
+  "Connect to the nvim process (via TCP socket)."
+  (setf *socket* (socket-connect host port :element-type '(unsigned-byte 8))))
 
 (defun send-msg (socket msg)
   "Send encoded msg to nvim."
@@ -16,13 +21,12 @@
         finally (force-output (socket-stream socket))))
 
 (defun byte-array->string (arr)
+  "Convert array of (unsigned-byte 8) to string."
   (octets-to-string (concatenate '(vector (unsigned-byte 8)) arr) :encoding :utf-8))
 
 (defun parse-response (response)
   "Parse the response received from nvim socket."
-    (let* ((*extended-types* *nvim-type-list*)
-           (response (decode response))
-           (msg-id (elt response 1))
+    (let* ((msg-id (elt response 1))
            (err (elt response 2))
            (err-str (if err (byte-array->string (elt err 1))))
            (result (elt response 3)))
@@ -32,15 +36,10 @@
 
 (defun get-result (socket)
   "Wait for response from nvim."
-  (let ((buffer (make-array 0 :element-type 'unsigned-byte :adjustable t :fill-pointer t)))
+  (let ((buffer (make-array 0 :element-type 'unsigned-byte :adjustable t :fill-pointer t))
+        (*extended-types* *nvim-type-list*))
     (wait-for-input socket)
-    (loop with byte
-          while (listen (socket-stream socket))
-          do (setf byte (read-byte (socket-stream socket)))
-          (when (= byte 13)
-            (return t))
-          (vector-push-extend byte buffer))
-    (parse-response buffer)))
+    (parse-response (decode-stream (socket-stream socket)))))
 
 (defun command->msg (command &optional args)
   "Encode nvim command and optional args into msgpack packet."
