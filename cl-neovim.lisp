@@ -36,14 +36,13 @@
 
 (defun get-result (socket)
   "Wait for response from nvim."
-  (let ((buffer (make-array 0 :element-type 'unsigned-byte :adjustable t :fill-pointer t))
-        (*extended-types* *nvim-type-list*))
+  (let ((*extended-types* *nvim-type-list*))
     (wait-for-input socket)
     (parse-response (decode-stream (socket-stream socket)))))
 
 (defun command->msg (command &optional args)
   "Encode nvim command and optional args into msgpack packet."
-  (let* ((*extended-types* *nvim-type-list*))
+  (let ((*extended-types* *nvim-type-list*))
     (encode `(0 ,(incf *msg-id*) ,command ,(or args #())))))
 
 (defun send-command (socket command &rest args)
