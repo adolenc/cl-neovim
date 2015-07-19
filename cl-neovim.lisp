@@ -45,7 +45,6 @@
 
 (defun send-command (socket command &rest args)
   "Send nvim command to neovim socket and return the result."
-  (unless *socket* (connect))
   (let ((msg (command->msg command args)))
     (send-msg socket msg)
     (get-result socket)))

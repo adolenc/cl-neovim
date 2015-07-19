@@ -6,6 +6,6 @@
         #:usocket
         #:messagepack
         #:babel)
-  (:export send-command
-           connect))
+  (:export #:send-command
+           #:connect))
 
