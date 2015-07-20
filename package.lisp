@@ -3,9 +3,9 @@
 (defpackage #:cl-neovim
   (:nicknames #:nvim)
   (:use #:cl
-        #:usocket
+        #:babel
         #:messagepack
-        #:babel)
-  (:export #:send-command
-           #:connect))
+        #:usocket)
+  (:export #:connect
+           #:send-command))
 
