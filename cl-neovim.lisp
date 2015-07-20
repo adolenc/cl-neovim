@@ -14,12 +14,13 @@
   "Connect to the nvim process (via TCP socket)."
   (setf *socket* (socket-connect host port :element-type '(unsigned-byte 8))))
 
-(defun establish-listener (socket)
+(defun establish-listener ()
   "Basic polling loop for input from nvim."
-  (loop do (progn (wait-for-input socket)
-                  (multiple-value-bind (id req args) (get-result socket)
+  (unless *socket* (connect))
+  (loop do (progn (wait-for-input *socket*)
+                  (multiple-value-bind (id req args) (get-result *socket*)
                     (format t "received: ~A ~A ~A~%" id req args)
-                    (send-msg socket (command->response "OK" id))))))
+                    (send-msg *socket* (command->response "OK" id))))))
 
 (defun send-msg (socket msg)
   "Send encoded msg to nvim."
@@ -67,8 +68,9 @@
   (let ((*extended-types* *nvim-type-list*))
     (encode `(1 ,msg-id ,command ,(or args #())))))
 
-(defun send-command (socket command &rest args)
+(defun send-command (command &rest args)
   "Send nvim command to neovim socket and return the result."
+  (unless *socket* (connect))
   (let ((msg (command->request command args)))
-    (send-msg socket msg)
-    (get-result socket)))
+    (send-msg *socket* msg)
+    (get-result *socket*)))
