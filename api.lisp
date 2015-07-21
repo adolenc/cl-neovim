@@ -1,25 +1,29 @@
 (in-package #:cl-neovim)
 
-(defun string->symbol (str) "Convert string into symbol." (intern (substitute #\- #\_ (format nil "~:@(~A~)" str))))
-(defun parse-args (args)
-  "Convert nvim's api representation of args into something we can use in lisp."
-  (cond ((listp args) (mapcar #'(lambda (arg) (string->symbol (second arg))) args))
-        ((stringp args) (list (string->symbol args)))
-        (t NIL)))
 
-(defun setterp (name) "Is name a setter?" (search "set_" name))
+(eval-when (:compile-toplevel)
 
-(defun drop-substring (str substr)
-  "Remove first occurence of substr in str."
-  (aif (search substr str)
-    (concatenate 'string (subseq str 0 it) (subseq str (+ it (length substr))))  
-    str))
+  (defun string->symbol (str) "Convert string into symbol." (intern (substitute #\- #\_ (format nil "~:@(~A~)" str)))) 
 
-(defun clean-up-name (name &optional (modifiers '("vim_" "get_" "set_")))
-  "Removes all substrings specified in modifiers from name."
-  (if modifiers
-    (clean-up-name (drop-substring name (first modifiers)) (rest modifiers))
-    name))
+  (defun parse-args (args)
+    "Convert nvim's api representation of args into something we can use in lisp."
+    (cond ((listp args) (mapcar #'(lambda (arg) (string->symbol (second arg))) args))
+          ((stringp args) (list (string->symbol args)))
+          (t NIL)))
+
+  (defun setterp (name) "Is name a setter?" (search "set_" name))
+
+  (defun drop-substring (str substr)
+    "Remove first occurence of substr in str."
+    (aif (search substr str)
+      (concatenate 'string (subseq str 0 it) (subseq str (+ it (length substr))))  
+      str))
+
+  (defun clean-up-name (name &optional (modifiers '("vim_" "get_" "set_")))
+    "Removes all substrings specified in modifiers from name."
+    (if modifiers
+      (clean-up-name (drop-substring name (first modifiers)) (rest modifiers))
+      name)))
 
 (defmacro desc->lisp-function (name args ret can-fail deferred &optional lisp-name)
   "Create and export functions from the parsed nvim's api."
