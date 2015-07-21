@@ -21,11 +21,11 @@
     (clean-up-name (drop-substring name (first modifiers)) (rest modifiers))
     name))
 
-(defmacro create-nvim-func (name args ret can-fail deferred)
+(defmacro create-nvim-func (name args ret can-fail deferred &optional (lisp-name NIL))
   "Create and export functions from the parsed nvim's api."
   (declare (ignore ret can-fail deferred))
   (let ((args (parse-args args))
-        (n (string->symbol (clean-up-name name))))
+        (n (string->symbol (if lisp-name lisp-name (clean-up-name name)))))
     (if (setterp name)
          `(progn (defun (setf ,n) (,@(last args) ,@(butlast args))
                   (multiple-value-bind (suc id res) (funcall #'send-command ,name ,@args)
@@ -33,12 +33,7 @@
          `(progn (defun ,n ,args
                   (multiple-value-bind (suc id res) (funcall #'send-command ,name ,@args)
                     res))
-                 (export ',n :cl-neovim)
-                ))))
-
-; (let ((w (current-window)))
-;   (format t "~A~%" (window-cursor w))
-;   (setf (window-cursor w) '(3 5)))
+                 (export ',n :cl-neovim)))))
 
 (create-nvim-func "window_get_buffer" (("Window" "window")) "Buffer" T NIL)
 (create-nvim-func "window_get_cursor" (("Window" "window"))
@@ -77,7 +72,7 @@
                    ("Boolean" "do_lt") ("Boolean" "special"))
                   "String" NIL NIL)
 (create-nvim-func "vim_command_output" (("String" "str")) "String" T NIL)
-; (create-nvim-func "vim_eval" (("String" "str")) "Object" T T)
+(create-nvim-func "vim_eval" (("String" "str")) "Object" T T "vim-eval")
 (create-nvim-func "vim_strwidth" (("String" "str")) "Integer" T NIL)
 (create-nvim-func "vim_list_runtime_paths" NIL "ArrayOf(String)" NIL NIL)
 (create-nvim-func "vim_change_directory" (("String" "dir")) "void" T NIL)

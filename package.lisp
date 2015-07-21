@@ -6,8 +6,7 @@
         #:babel
         #:messagepack
         #:usocket
-        #:anaphora
-        )
+        #:anaphora)
   (:export #:connect
            #:send-command))
 
