@@ -2,21 +2,21 @@ About
 -----
 This is a [Neovim](http://neovim.io/) client library, which could eventually be used to write neovim plugins with Common Lisp.
 
-A lot of people already implemented support for [various different languages](https://github.com/neovim/neovim/wiki/Related-projects#api-clients), but as far as I know this is the first attempt at adding support for Common Lisp.
+A lot of people already implemented libraries for writing neovim plugins in [various different languages](https://github.com/neovim/neovim/wiki/Related-projects#api-clients), but as far as I know this is the first attempt at adding support for Common Lisp.
 
 Currently the only thing that even remotely works is one-way communication with neovim client via TCP socket.
 
 Installation
 -----------
-Currently the simplest way to install the package is to use [quicklisp](https://www.quicklisp.org/). First clone this repository into your `quicklisp/local-projects` folder:
+Right now the simplest way to install the package is to use [quicklisp](https://www.quicklisp.org/). First clone this repository into your `quicklisp/local-projects` folder:
 
     cd ~/quicklisp/local-projects/ && git clone https://github.com/adolenc/cl-neovim
 
-After this, run neovim and make sure it listens to proper address:
+After this, run neovim and make sure it listens to the right address:
 
     NVIM_LISTEN_ADDRESS=127.0.0.1:7777 nvim
 
-The only package `cl-neovim` depends on and quicklisp is not in quicklisp's repository (and really needs to be up-to-date) is [cl-messagepack](https://github.com/mbrezu/cl-messagepack), so make sure you clone that into `local-projects` as well. After that, run the repo and eval:
+The only package `cl-neovim` depends on and is not up-to-date in quicklisp's repository is [cl-messagepack](https://github.com/mbrezu/cl-messagepack), so make sure you clone that into `local-projects` as well. After that, run the repo and eval:
 
     (ql:quickload 'cl-neovim)
     (nvim:command "echo 'Hello from common lisp!'")
@@ -28,15 +28,16 @@ I'm using SBCL in debian testing for development so it definitely works here. If
 
 API
 ---
-Package basically exports every function exposed by neovim's api. You can find the full listing in [api.lisp](https://github.com/adolenc/cl-neovim/blob/master/api.lisp).
+Package basically exports every function exposed by neovim's api. You can find the full listing in [api.lisp](https://github.com/adolenc/cl-neovim/blob/master/api.lisp#L42-L158) (first string argument is the name).
 
 Some things are renamed for nicer interface though. Specifically:
 - underscores are replaced with hyphens;
 - names starting with `vim_` have that prefix removed (except for `vim_eval`);
 - `get_` and `set_` are removed from names.
+
 For instance, `vim_get_current_line` is now just `current-line` and `buffer_get_line` becomes `buffer-line`.
 
-Setter functions (those with `set` in their names) are implemented as inversions of their respective `get` counterparts via `setf` macro. For example, to set current line to "some new line", you would use `(setf (nvim:current-line) "some new line")`.
+Setter functions (those with `set` in their names) are implemented as inversions of their respective `get` counterparts via `setf` macro. So, to set current line to "some new line", you would use `(setf (nvim:current-line) "some new line")`.
 
 Contributions
 -------------
