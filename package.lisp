@@ -5,7 +5,9 @@
   (:use #:cl
         #:babel
         #:messagepack
-        #:usocket)
+        #:usocket
+        #:anaphora
+        )
   (:export #:connect
            #:send-command))
 
