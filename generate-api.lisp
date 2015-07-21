@@ -24,4 +24,4 @@
 
 (defparameter *api* (parse-api (retrieve-api)))
 
-(mapcar #'(lambda (details) `(create-nvim-func ,@details)) *api*)
+(mapcar #'(lambda (details) `(desc->lisp-function ,@details)) *api*)
