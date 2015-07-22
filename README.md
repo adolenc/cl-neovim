@@ -28,7 +28,7 @@ I'm using SBCL in debian testing for development so it definitely works here. If
 
 API
 ---
-Package basically exports every function exposed by neovim's api. You can find the full listing in [interface.lisp](https://github.com/adolenc/cl-neovim/blob/master/interface.lisp#L42-L158) (first string argument is the name).
+Package basically exports every function exposed by neovim's api. You can find the full listing in [interface.lisp](https://github.com/adolenc/cl-neovim/blob/master/interface.lisp#L45-L161) (first string argument is the name).
 
 Some things are renamed for nicer interface though. Specifically:
 - underscores are replaced with hyphens;

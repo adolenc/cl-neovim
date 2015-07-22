@@ -3,10 +3,12 @@
 
 (eval-when (:compile-toplevel)
 
+(defconstant +dangerous-names+ '("vim_eval"))
+
 (defun string->symbol (str) "Convert string into symbol." (intern (substitute #\- #\_ (format nil "~:@(~A~)" str)))) 
 
 (defun parse-args (args)
-  "Convert nvim's api representation of args into something we can use in lisp."
+  "Extract names from nvim api's description of arguments into a list of symbols."
   (cond ((listp args) (mapcar #'(lambda (arg) (string->symbol (second arg))) args))
         ((stringp args) (list (string->symbol args)))
         (t NIL)))
@@ -27,11 +29,11 @@
 
 ) ; end of eval-when
 
-(defmacro desc->lisp-function (name args ret can-fail deferred &optional lisp-name)
+(defmacro desc->lisp-function (name args ret can-fail deferred)
   "Create and export functions from the parsed nvim's api."
   (declare (ignore ret can-fail deferred))
   (let ((args (parse-args args))
-        (n (string->symbol (or lisp-name (clean-up-name name)))))
+        (n (string->symbol (if (member name +dangerous-names+ :test #'string-equal) name (clean-up-name name)))))
     (if (setterp name)
       `(defun (setf ,n) (,@(last args) ,@(butlast args))
          (funcall #'send-command ,name ,@args))
@@ -39,6 +41,7 @@
                 (funcall #'send-command ,name ,@args))
               (export ',n :cl-neovim)))))
 
+;;;; Rest of file generated with `generate-api.lisp'.
 (desc->lisp-function "window_get_buffer" (("Window" "window")) "Buffer" T NIL)
 (desc->lisp-function "window_get_cursor" (("Window" "window"))
                      "ArrayOf(Integer, 2)" T NIL)
@@ -76,7 +79,7 @@
                                        ("Boolean" "do_lt") ("Boolean" "special"))
                      "String" NIL NIL)
 (desc->lisp-function "vim_command_output" (("String" "str")) "String" T NIL)
-(desc->lisp-function "vim_eval" (("String" "str")) "Object" T T "vim-eval")
+(desc->lisp-function "vim_eval" (("String" "str")) "Object" T T)
 (desc->lisp-function "vim_strwidth" (("String" "str")) "Integer" T NIL)
 (desc->lisp-function "vim_list_runtime_paths" NIL "ArrayOf(String)" NIL NIL)
 (desc->lisp-function "vim_change_directory" (("String" "dir")) "void" T NIL)
