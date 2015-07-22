@@ -2,11 +2,10 @@
 
 (defparameter *msg-id* 0)
 (defparameter *nvim-type-list* (define-extension-types
-                                 '(:numeric
-                                    0
-                                    Buffer
-                                    Window
-                                    Tabpage)))
+                                 '(0
+                                   Buffer
+                                   Window
+                                   Tabpage)))
 (defparameter *socket* NIL)
 
 (defun connect (&optional (host #(127 0 0 1)) (port 7777))
@@ -33,37 +32,39 @@
 
 (defun parse-request (request)
   "Parse the request received from nvim socket."
-  (let ((msg-id (elt request 1))
-        (req (elt request 2))
-        (args (elt request 3)))
+  (destructuring-bind (_ msg-id req args) request
+    (declare (ignore _))
     (values msg-id (byte-array->string req) args)))
 
 (defun parse-response (response)
   "Parse the response received from nvim socket."
-  (let ((msg-id (elt response 1))
-        (err (elt response 2))
-        (result (elt response 3)))
+  (destructuring-bind (_ msg-id err result) response
+    (declare (ignore _))
     (if err
-      (values NIL msg-id (byte-array->string (elt err 1)))
+      (values NIL msg-id (byte-array->string (first err)))
       (values T msg-id result)))) 
 
 (defun msg-type (msg)
-  (if (= (elt msg 0) 0) 'request 'response))
+  (if (= (first msg) 0) 'request 'response))
 
 (defun get-result ()
   "Wait for response from nvim."
-  (let* ((*extended-types* *nvim-type-list*)
+  (let* ((*decoder-prefers-lists* T)
+         (*extended-types* *nvim-type-list*)
          (msg (decode-stream (socket-stream *socket*)))
          (msg-parsing-fun (if (eq (msg-type msg) 'request) #'parse-request #'parse-response)))
-    (multiple-value-bind (succ id res) (funcall msg-parsing-fun msg)
-      (if succ res (error res)))))
+    (multiple-value-bind (succ msg-id result) (funcall msg-parsing-fun msg)
+      (declare (ignore msg-id))
+      (if succ result (error result)))))
 
 (defun command->request (command &optional args)
   "Encode nvim command and optional args into msgpack packet."
-  (let ((*extended-types* *nvim-type-list*))
+  (let ((*extended-types* *nvim-type-list*)
+         (*decoder-prefers-lists* T))
     (encode `(0 ,(incf *msg-id*) ,command ,(or args #())))))
 
 (defun command->response (command msg-id &optional args)
   "Encode nvim command and optional args into msgpack packet."
-  (let ((*extended-types* *nvim-type-list*))
+  (let ((*extended-types* *nvim-type-list*)
+        (*decoder-prefers-lists* T))
     (encode `(1 ,msg-id ,command ,(or args #())))))

@@ -50,7 +50,6 @@ Pretty much everything still needs to be done, but here are some bullet points a
 - refactor `desc->lisp-function` macro;
 - add support for other types of communication (unix sockets, stdio, ...);
 - return values of functions should correspond to the api - right now, because neovim sends strings as array of bytes, we just return that instead of converting to string first;
-- lists instead of arrays in the interface should probably be preferred (this ties in with previous todo);
 - add error handling;
 - figure out how to actually register with neovim as a host;
 - add support for callbacks (need to make things async first);
