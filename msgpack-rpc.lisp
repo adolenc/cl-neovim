@@ -19,13 +19,13 @@
   (loop do (progn (wait-for-input *socket*)
                   (multiple-value-bind (id req args) (get-result *socket*)
                     (format t "received: ~A ~A ~A~%" id req args)
-                    (send-msg *socket* (command->response "OK" id))))))
+                    (send-msg (command->response "OK" id))))))
 
-(defun send-msg (socket msg)
+(defun send-msg (msg)
   "Send encoded msg to nvim."
   (loop for m across msg
-        do (write-byte m (socket-stream socket))
-        finally (force-output (socket-stream socket))))
+        do (write-byte m (socket-stream *socket*))
+        finally (force-output (socket-stream *socket*))))
 
 (defun byte-array->string (arr)
   "Convert array of (unsigned-byte 8) to string."
@@ -50,12 +50,13 @@
 (defun msg-type (msg)
   (if (= (elt msg 0) 0) 'request 'response))
 
-(defun get-result (socket)
+(defun get-result ()
   "Wait for response from nvim."
   (let* ((*extended-types* *nvim-type-list*)
-         (msg (decode-stream (socket-stream socket)))
+         (msg (decode-stream (socket-stream *socket*)))
          (msg-parsing-fun (if (eq (msg-type msg) 'request) #'parse-request #'parse-response)))
-    (funcall msg-parsing-fun msg)))
+    (multiple-value-bind (succ id res) (funcall msg-parsing-fun msg)
+      (if succ res (error res)))))
 
 (defun command->request (command &optional args)
   "Encode nvim command and optional args into msgpack packet."

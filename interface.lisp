@@ -3,27 +3,29 @@
 
 (eval-when (:compile-toplevel)
 
-  (defun string->symbol (str) "Convert string into symbol." (intern (substitute #\- #\_ (format nil "~:@(~A~)" str)))) 
+(defun string->symbol (str) "Convert string into symbol." (intern (substitute #\- #\_ (format nil "~:@(~A~)" str)))) 
 
-  (defun parse-args (args)
-    "Convert nvim's api representation of args into something we can use in lisp."
-    (cond ((listp args) (mapcar #'(lambda (arg) (string->symbol (second arg))) args))
-          ((stringp args) (list (string->symbol args)))
-          (t NIL)))
+(defun parse-args (args)
+  "Convert nvim's api representation of args into something we can use in lisp."
+  (cond ((listp args) (mapcar #'(lambda (arg) (string->symbol (second arg))) args))
+        ((stringp args) (list (string->symbol args)))
+        (t NIL)))
 
-  (defun setterp (name) "Is name a setter?" (search "set_" name))
+(defun setterp (name) "Is name a setter?" (search "set_" name))
 
-  (defun drop-substring (str substr)
-    "Remove first occurence of substr in str."
-    (aif (search substr str)
-      (concatenate 'string (subseq str 0 it) (subseq str (+ it (length substr))))  
-      str))
+(defun drop-substring (str substr)
+  "Remove first occurence of substr in str."
+  (aif (search substr str)
+    (concatenate 'string (subseq str 0 it) (subseq str (+ it (length substr))))  
+    str))
 
-  (defun clean-up-name (name &optional (modifiers '("vim_" "get_" "set_")))
-    "Removes all substrings specified in modifiers from name."
-    (if modifiers
-      (clean-up-name (drop-substring name (first modifiers)) (rest modifiers))
-      name)))
+(defun clean-up-name (name &optional (modifiers '("vim_" "get_" "set_")))
+  "Removes all substrings specified in modifiers from name."
+  (if modifiers
+    (clean-up-name (drop-substring name (first modifiers)) (rest modifiers))
+    name))
+
+) ; end of eval-when
 
 (defmacro desc->lisp-function (name args ret can-fail deferred &optional lisp-name)
   "Create and export functions from the parsed nvim's api."
@@ -31,13 +33,11 @@
   (let ((args (parse-args args))
         (n (string->symbol (or lisp-name (clean-up-name name)))))
     (if (setterp name)
-         `(progn (defun (setf ,n) (,@(last args) ,@(butlast args))
-                  (multiple-value-bind (suc id res) (funcall #'send-command ,name ,@args)
-                    res)))
-         `(progn (defun ,n ,args
-                  (multiple-value-bind (suc id res) (funcall #'send-command ,name ,@args)
-                    res))
-                 (export ',n :cl-neovim)))))
+      `(defun (setf ,n) (,@(last args) ,@(butlast args))
+         (funcall #'send-command ,name ,@args))
+      `(progn (defun ,n ,args
+                (funcall #'send-command ,name ,@args))
+              (export ',n :cl-neovim)))))
 
 (desc->lisp-function "window_get_buffer" (("Window" "window")) "Buffer" T NIL)
 (desc->lisp-function "window_get_cursor" (("Window" "window"))
