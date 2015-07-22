@@ -12,11 +12,11 @@ Right now the simplest way to install the package is to use [quicklisp](https://
 
     cd ~/quicklisp/local-projects/ && git clone https://github.com/adolenc/cl-neovim
 
-After this, run neovim and make sure it listens to the right address:
+After this, run neovim and make it listen to the right address:
 
     NVIM_LISTEN_ADDRESS=127.0.0.1:7777 nvim
 
-The only package `cl-neovim` depends on and is not up-to-date in quicklisp's repository is [cl-messagepack](https://github.com/mbrezu/cl-messagepack), so make sure you clone that into `local-projects` as well. After that, run the repo and eval:
+The only package `cl-neovim` depends on and is not up-to-date in quicklisp's repository is [cl-messagepack](https://github.com/mbrezu/cl-messagepack), so clone that into `local-projects` as well. After that, run the repl and evaluate:
 
     (ql:quickload 'cl-neovim)
     (nvim:command "echo 'Hello from common lisp!'")
@@ -28,7 +28,7 @@ I'm using SBCL in debian testing for development so it definitely works here. If
 
 API
 ---
-Package basically exports every function exposed by neovim's api. You can find the full listing in [api.lisp](https://github.com/adolenc/cl-neovim/blob/master/api.lisp#L42-L158) (first string argument is the name).
+Package basically exports every function exposed by neovim's api. You can find the full listing in [interface.lisp](https://github.com/adolenc/cl-neovim/blob/master/interface.lisp#L42-L158) (first string argument is the name).
 
 Some things are renamed for nicer interface though. Specifically:
 - underscores are replaced with hyphens;

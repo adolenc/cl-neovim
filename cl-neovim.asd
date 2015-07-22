@@ -7,5 +7,6 @@
   :serial t
   :components ((:file "package")
                (:file "cl-neovim")
-               (:file "api")))
+               (:file "msgpack-rpc")
+               (:file "interface")))
 
