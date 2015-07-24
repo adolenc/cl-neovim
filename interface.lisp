@@ -3,12 +3,12 @@
 
 (eval-when (:compile-toplevel)
 
-(defconstant +dangerous-names+ '("vim_eval"))
+(defparameter *dangerous-names* '("vim_eval"))
 
 (defun string->symbol (str) "Convert string into symbol." (intern (substitute #\- #\_ (format nil "~:@(~A~)" str)))) 
 
 (defun parse-args (args)
-  "Extract names from nvim api's description of arguments into a list of symbols."
+  "Extract names from nvim api's metadata of arguments into a list of symbols."
   (cond ((listp args) (mapcar #'(lambda (arg) (string->symbol (second arg))) args))
         ((stringp args) (list (string->symbol args)))
         (t NIL)))
@@ -29,11 +29,11 @@
 
 ) ; end of eval-when
 
-(defmacro desc->lisp-function (name args ret can-fail deferred)
+(defmacro mdata->lisp-function (name args ret can-fail deferred)
   "Create and export functions from the parsed nvim's api."
   (declare (ignore ret can-fail deferred))
   (let ((args (parse-args args))
-        (n (string->symbol (if (member name +dangerous-names+ :test #'string-equal) name (clean-up-name name)))))
+        (n (string->symbol (if (member name *dangerous-names* :test #'string-equal) name (clean-up-name name)))))
     (if (setterp name)
       `(defun (setf ,n) (,@(last args) ,@(butlast args))
          (funcall #'send-command ,name ,@args))
@@ -42,120 +42,120 @@
               (export ',n :cl-neovim)))))
 
 ;;;; Rest of file generated with `generate-api.lisp'.
-(desc->lisp-function "window_get_buffer" (("Window" "window")) "Buffer" T NIL)
-(desc->lisp-function "window_get_cursor" (("Window" "window"))
+(mdata->lisp-function "window_get_buffer" (("Window" "window")) "Buffer" T NIL)
+(mdata->lisp-function "window_get_cursor" (("Window" "window"))
                      "ArrayOf(Integer, 2)" T NIL)
-(desc->lisp-function "window_set_cursor"
+(mdata->lisp-function "window_set_cursor"
                      (("Window" "window") ("ArrayOf(Integer, 2)" "pos")) "void" T
                      T)
-(desc->lisp-function "window_get_height" (("Window" "window")) "Integer" T NIL)
-(desc->lisp-function "window_set_height"
+(mdata->lisp-function "window_get_height" (("Window" "window")) "Integer" T NIL)
+(mdata->lisp-function "window_set_height"
                      (("Window" "window") ("Integer" "height")) "void" T T)
-(desc->lisp-function "window_get_width" (("Window" "window")) "Integer" T NIL)
-(desc->lisp-function "window_set_width" (("Window" "window") ("Integer" "width"))
+(mdata->lisp-function "window_get_width" (("Window" "window")) "Integer" T NIL)
+(mdata->lisp-function "window_set_width" (("Window" "window") ("Integer" "width"))
                      "void" T T)
-(desc->lisp-function "window_get_var" (("Window" "window") ("String" "name"))
+(mdata->lisp-function "window_get_var" (("Window" "window") ("String" "name"))
                      "Object" T NIL)
-(desc->lisp-function "window_set_var"
+(mdata->lisp-function "window_set_var"
                      (("Window" "window") ("String" "name") ("Object" "value"))
                      "Object" T T)
-(desc->lisp-function "window_get_option" (("Window" "window") ("String" "name"))
+(mdata->lisp-function "window_get_option" (("Window" "window") ("String" "name"))
                      "Object" T NIL)
-(desc->lisp-function "window_set_option"
+(mdata->lisp-function "window_set_option"
                      (("Window" "window") ("String" "name") ("Object" "value"))
                      "void" T T)
-(desc->lisp-function "window_get_position" (("Window" "window"))
+(mdata->lisp-function "window_get_position" (("Window" "window"))
                      "ArrayOf(Integer, 2)" T NIL)
-(desc->lisp-function "window_get_tabpage" (("Window" "window")) "Tabpage" T NIL)
-(desc->lisp-function "window_is_valid" (("Window" "window")) "Boolean" NIL NIL)
-(desc->lisp-function "vim_command" (("String" "str")) "void" T T)
-(desc->lisp-function "vim_feedkeys"
+(mdata->lisp-function "window_get_tabpage" (("Window" "window")) "Tabpage" T NIL)
+(mdata->lisp-function "window_is_valid" (("Window" "window")) "Boolean" NIL NIL)
+(mdata->lisp-function "vim_command" (("String" "str")) "void" T T)
+(mdata->lisp-function "vim_feedkeys"
                      (("String" "keys") ("String" "mode")
                                         ("Boolean" "escape_csi"))
                      "void" NIL T)
-(desc->lisp-function "vim_input" (("String" "keys")) "Integer" NIL NIL)
-(desc->lisp-function "vim_replace_termcodes"
+(mdata->lisp-function "vim_input" (("String" "keys")) "Integer" NIL NIL)
+(mdata->lisp-function "vim_replace_termcodes"
                      (("String" "str") ("Boolean" "from_part")
                                        ("Boolean" "do_lt") ("Boolean" "special"))
                      "String" NIL NIL)
-(desc->lisp-function "vim_command_output" (("String" "str")) "String" T NIL)
-(desc->lisp-function "vim_eval" (("String" "str")) "Object" T T)
-(desc->lisp-function "vim_strwidth" (("String" "str")) "Integer" T NIL)
-(desc->lisp-function "vim_list_runtime_paths" NIL "ArrayOf(String)" NIL NIL)
-(desc->lisp-function "vim_change_directory" (("String" "dir")) "void" T NIL)
-(desc->lisp-function "vim_get_current_line" NIL "String" T NIL)
-(desc->lisp-function "vim_set_current_line" (("String" "line")) "void" T T)
-(desc->lisp-function "vim_del_current_line" NIL "void" T T)
-(desc->lisp-function "vim_get_var" (("String" "name")) "Object" T NIL)
-(desc->lisp-function "vim_set_var" (("String" "name") ("Object" "value"))
+(mdata->lisp-function "vim_command_output" (("String" "str")) "String" T NIL)
+(mdata->lisp-function "vim_eval" (("String" "str")) "Object" T T)
+(mdata->lisp-function "vim_strwidth" (("String" "str")) "Integer" T NIL)
+(mdata->lisp-function "vim_list_runtime_paths" NIL "ArrayOf(String)" NIL NIL)
+(mdata->lisp-function "vim_change_directory" (("String" "dir")) "void" T NIL)
+(mdata->lisp-function "vim_get_current_line" NIL "String" T NIL)
+(mdata->lisp-function "vim_set_current_line" (("String" "line")) "void" T T)
+(mdata->lisp-function "vim_del_current_line" NIL "void" T T)
+(mdata->lisp-function "vim_get_var" (("String" "name")) "Object" T NIL)
+(mdata->lisp-function "vim_set_var" (("String" "name") ("Object" "value"))
                      "Object" T T)
-(desc->lisp-function "vim_get_vvar" (("String" "name")) "Object" T NIL)
-(desc->lisp-function "vim_get_option" (("String" "name")) "Object" T NIL)
-(desc->lisp-function "vim_set_option" (("String" "name") ("Object" "value"))
+(mdata->lisp-function "vim_get_vvar" (("String" "name")) "Object" T NIL)
+(mdata->lisp-function "vim_get_option" (("String" "name")) "Object" T NIL)
+(mdata->lisp-function "vim_set_option" (("String" "name") ("Object" "value"))
                      "void" T T)
-(desc->lisp-function "vim_out_write" (("String" "str")) "void" NIL T)
-(desc->lisp-function "vim_err_write" (("String" "str")) "void" NIL T)
-(desc->lisp-function "vim_report_error" (("String" "str")) "void" NIL T)
-(desc->lisp-function "vim_get_buffers" NIL "ArrayOf(Buffer)" NIL NIL)
-(desc->lisp-function "vim_get_current_buffer" NIL "Buffer" NIL NIL)
-(desc->lisp-function "vim_set_current_buffer" (("Buffer" "buffer")) "void" T T)
-(desc->lisp-function "vim_get_windows" NIL "ArrayOf(Window)" NIL NIL)
-(desc->lisp-function "vim_get_current_window" NIL "Window" NIL NIL)
-(desc->lisp-function "vim_set_current_window" (("Window" "window")) "void" T T)
-(desc->lisp-function "vim_get_tabpages" NIL "ArrayOf(Tabpage)" NIL NIL)
-(desc->lisp-function "vim_get_current_tabpage" NIL "Tabpage" NIL NIL)
-(desc->lisp-function "vim_set_current_tabpage" (("Tabpage" "tabpage")) "void" T
+(mdata->lisp-function "vim_out_write" (("String" "str")) "void" NIL T)
+(mdata->lisp-function "vim_err_write" (("String" "str")) "void" NIL T)
+(mdata->lisp-function "vim_report_error" (("String" "str")) "void" NIL T)
+(mdata->lisp-function "vim_get_buffers" NIL "ArrayOf(Buffer)" NIL NIL)
+(mdata->lisp-function "vim_get_current_buffer" NIL "Buffer" NIL NIL)
+(mdata->lisp-function "vim_set_current_buffer" (("Buffer" "buffer")) "void" T T)
+(mdata->lisp-function "vim_get_windows" NIL "ArrayOf(Window)" NIL NIL)
+(mdata->lisp-function "vim_get_current_window" NIL "Window" NIL NIL)
+(mdata->lisp-function "vim_set_current_window" (("Window" "window")) "void" T T)
+(mdata->lisp-function "vim_get_tabpages" NIL "ArrayOf(Tabpage)" NIL NIL)
+(mdata->lisp-function "vim_get_current_tabpage" NIL "Tabpage" NIL NIL)
+(mdata->lisp-function "vim_set_current_tabpage" (("Tabpage" "tabpage")) "void" T
                      T)
-(desc->lisp-function "vim_subscribe" (("String" "event")) "void" NIL NIL)
-(desc->lisp-function "vim_unsubscribe" (("String" "event")) "void" NIL NIL)
-(desc->lisp-function "vim_name_to_color" (("String" "name")) "Integer" NIL NIL)
-(desc->lisp-function "vim_get_color_map" NIL "Dictionary" NIL NIL)
-(desc->lisp-function "vim_get_api_info" NIL "Array" NIL NIL)
-(desc->lisp-function "tabpage_get_windows" (("Tabpage" "tabpage"))
+(mdata->lisp-function "vim_subscribe" (("String" "event")) "void" NIL NIL)
+(mdata->lisp-function "vim_unsubscribe" (("String" "event")) "void" NIL NIL)
+(mdata->lisp-function "vim_name_to_color" (("String" "name")) "Integer" NIL NIL)
+(mdata->lisp-function "vim_get_color_map" NIL "Dictionary" NIL NIL)
+(mdata->lisp-function "vim_get_api_info" NIL "Array" NIL NIL)
+(mdata->lisp-function "tabpage_get_windows" (("Tabpage" "tabpage"))
                      "ArrayOf(Window)" T NIL)
-(desc->lisp-function "tabpage_get_var" (("Tabpage" "tabpage") ("String" "name"))
+(mdata->lisp-function "tabpage_get_var" (("Tabpage" "tabpage") ("String" "name"))
                      "Object" T NIL)
-(desc->lisp-function "tabpage_set_var"
+(mdata->lisp-function "tabpage_set_var"
                      (("Tabpage" "tabpage") ("String" "name") ("Object" "value"))
                      "Object" T T)
-(desc->lisp-function "tabpage_get_window" (("Tabpage" "tabpage")) "Window" T NIL)
-(desc->lisp-function "tabpage_is_valid" (("Tabpage" "tabpage")) "Boolean" NIL
+(mdata->lisp-function "tabpage_get_window" (("Tabpage" "tabpage")) "Window" T NIL)
+(mdata->lisp-function "tabpage_is_valid" (("Tabpage" "tabpage")) "Boolean" NIL
                      NIL)
-(desc->lisp-function "buffer_line_count" (("Buffer" "buffer")) "Integer" T NIL)
-(desc->lisp-function "buffer_get_line" (("Buffer" "buffer") ("Integer" "index"))
+(mdata->lisp-function "buffer_line_count" (("Buffer" "buffer")) "Integer" T NIL)
+(mdata->lisp-function "buffer_get_line" (("Buffer" "buffer") ("Integer" "index"))
                      "String" T NIL)
-(desc->lisp-function "buffer_set_line"
+(mdata->lisp-function "buffer_set_line"
                      (("Buffer" "buffer") ("Integer" "index") ("String" "line"))
                      "void" T T)
-(desc->lisp-function "buffer_del_line" (("Buffer" "buffer") ("Integer" "index"))
+(mdata->lisp-function "buffer_del_line" (("Buffer" "buffer") ("Integer" "index"))
                      "void" T T)
-(desc->lisp-function "buffer_get_line_slice"
+(mdata->lisp-function "buffer_get_line_slice"
                      (("Buffer" "buffer") ("Integer" "start") ("Integer" "end")
                                           ("Boolean" "include_start") ("Boolean" "include_end"))
                      "ArrayOf(String)" T NIL)
-(desc->lisp-function "buffer_set_line_slice"
+(mdata->lisp-function "buffer_set_line_slice"
                      (("Buffer" "buffer") ("Integer" "start") ("Integer" "end")
                                           ("Boolean" "include_start") ("Boolean" "include_end")
                                           ("ArrayOf(String)" "replacement"))
                      "void" T T)
-(desc->lisp-function "buffer_get_var" (("Buffer" "buffer") ("String" "name"))
+(mdata->lisp-function "buffer_get_var" (("Buffer" "buffer") ("String" "name"))
                      "Object" T NIL)
-(desc->lisp-function "buffer_set_var"
+(mdata->lisp-function "buffer_set_var"
                      (("Buffer" "buffer") ("String" "name") ("Object" "value"))
                      "Object" T T)
-(desc->lisp-function "buffer_get_option" (("Buffer" "buffer") ("String" "name"))
+(mdata->lisp-function "buffer_get_option" (("Buffer" "buffer") ("String" "name"))
                      "Object" T NIL)
-(desc->lisp-function "buffer_set_option"
+(mdata->lisp-function "buffer_set_option"
                      (("Buffer" "buffer") ("String" "name") ("Object" "value"))
                      "void" T T)
-(desc->lisp-function "buffer_get_number" (("Buffer" "buffer")) "Integer" T NIL)
-(desc->lisp-function "buffer_get_name" (("Buffer" "buffer")) "String" T NIL)
-(desc->lisp-function "buffer_set_name" (("Buffer" "buffer") ("String" "name"))
+(mdata->lisp-function "buffer_get_number" (("Buffer" "buffer")) "Integer" T NIL)
+(mdata->lisp-function "buffer_get_name" (("Buffer" "buffer")) "String" T NIL)
+(mdata->lisp-function "buffer_set_name" (("Buffer" "buffer") ("String" "name"))
                      "void" T T)
-(desc->lisp-function "buffer_is_valid" (("Buffer" "buffer")) "Boolean" NIL NIL)
-(desc->lisp-function "buffer_insert"
+(mdata->lisp-function "buffer_is_valid" (("Buffer" "buffer")) "Boolean" NIL NIL)
+(mdata->lisp-function "buffer_insert"
                      (("Buffer" "buffer") ("Integer" "lnum")
                                           ("ArrayOf(String)" "lines"))
                      "void" T T)
-(desc->lisp-function "buffer_get_mark" (("Buffer" "buffer") ("String" "name"))
+(mdata->lisp-function "buffer_get_mark" (("Buffer" "buffer") ("String" "name"))
                      "ArrayOf(Integer, 2)" T NIL)

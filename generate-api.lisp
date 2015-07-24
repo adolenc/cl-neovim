@@ -1,27 +1,28 @@
 (in-package #:nvim)
 
-(defun function-description (f)
-  (labels ((decode-description (description)
-             (cond ((and (arrayp description) (= (length description) 0)) '())
-                   ((and (arrayp description) (numberp (elt description 0))) (byte-array->string description))
-                   ((arrayp description) (loop for p across description collect (decode-description p)))
-                   (t description))))
-    (let* ((detail-names '("name" "parameters" "return_type" "can_fail" "deferred"))
-           (encoded-names (mapcar #'string-to-octets detail-names))
+(defun encode-name (name)
+  (loop for b across (string-to-octets name) collect b))
+
+(defun function-metadata (f)
+  (labels ((decode-metadata (metadata)
+             (cond ((and (listp metadata) (= (length metadata) 0)) '())
+                   ((and (listp metadata) (numberp (first metadata))) (byte-array->string metadata))
+                   ((listp metadata) (loop for p in metadata collect (decode-metadata p)))
+                   (t metadata))))
+    (let* ((metadata-names '("name" "parameters" "return_type" "can_fail" "deferred"))
+           (encoded-names (mapcar #'encode-name metadata-names))
            (encoded-results (mapcar #'(lambda (n) (gethash n f)) encoded-names)))
-      (mapcar #'decode-description encoded-results))))
+      (mapcar #'decode-metadata encoded-results))))
 
 (defun parse-api (api)
-  (let* ((api (elt api 1))
-         (functions (gethash (string-to-octets "functions") api)))
-    (loop for f across functions
-          collect (function-description f))))
+  (let* ((api (second api))
+         (functions (gethash (encode-name "functions") api)))
+    (loop for f in functions
+          collect (function-metadata f))))
 
 (defun retrieve-api ()
-  (multiple-value-bind (suc id res) (send-command "vim_get_api_info")
-    (declare (ignore suc id))
-    res))
+  (nvim:api-info))
 
 (defparameter *api* (parse-api (retrieve-api)))
 
-(mapcar #'(lambda (details) `(desc->lisp-function ,@details)) *api*)
+(mapcar #'(lambda (metadata) `(mdata->lisp-function ,@metadata)) *api*)

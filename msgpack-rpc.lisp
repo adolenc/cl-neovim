@@ -3,37 +3,6 @@
 (defparameter *msg-id* 0)
 (defparameter *socket* NIL)
 
-(defun connect (&optional (host #(127 0 0 1)) (port 7777))
-  "Connect to the TCP socket."
-  (setf *socket* (socket-connect host port :element-type '(unsigned-byte 8))))
-
-(defun establish-listener ()
-  "Basic polling loop for input from *socket*"
-  (unless *socket* (connect))
-  (let ((*decoder-prefers-lists* T)
-        (*extended-types* *nvim-type-list*))
-    (loop do (progn (wait-for-input *socket*)
-                    (multiple-value-bind (msg-id msg-result) (get-result)
-                      (send-msg (make-rpc-response msg-id NIL "Working!")))))))
-
-(defun send-msg (msg)
-  "Send encoded msg to *socket*"
-  (loop for m across msg
-        do (write-byte m (socket-stream *socket*))
-        finally (force-output (socket-stream *socket*))))
-
-(defun get-result ()
-  "Wait for response from *socket*."
-  (parse-msg (decode-stream (socket-stream *socket*))))
-
-(defun parse-msg (msg)
-  "Call appropriate parse function based on type of message."
-  (funcall (cdr (assoc (first msg) *msg-parsers*)) msg))
-
-(defun byte-array->string (arr)
-  "Convert array of (unsigned-byte 8) to string."
-  (octets-to-string (concatenate '(vector (unsigned-byte 8)) arr) :encoding :utf-8))
-
 (eval-when (:compile-toplevel)
   (defun symbol-append (&rest symbols) 
     (intern (apply #'concatenate 'string (mapcar #'symbol-name symbols))))
@@ -71,3 +40,36 @@
 (msg-rpc-type notification 2
               msg-method
               msg-params)
+
+
+(defun connect (&optional (host #(127 0 0 1)) (port 7777))
+  "Connect to the TCP socket."
+  (setf *socket* (socket-connect host port :element-type '(unsigned-byte 8))))
+
+(defun establish-listener ()
+  "Basic polling loop for input from *socket*"
+  (unless *socket* (connect))
+  (let ((*decoder-prefers-lists* T)
+        (*extended-types* *nvim-type-list*))
+    (loop repeat 3
+          do (progn (wait-for-input *socket*)
+                    (multiple-value-bind (msg-id msg-result) (get-result)
+                      (send-msg (make-rpc-response msg-id NIL "Working!")))))))
+
+(defun send-msg (msg)
+  "Send encoded msg to *socket*"
+  (loop for m across msg
+        do (write-byte m (socket-stream *socket*))
+        finally (force-output (socket-stream *socket*))))
+
+(defun get-result ()
+  "Wait for response from *socket*."
+  (parse-msg (decode-stream (socket-stream *socket*))))
+
+(defun parse-msg (msg)
+  "Call appropriate parse function based on type of message."
+  (funcall (cdr (assoc (first msg) *msg-parsers*)) msg))
+
+(defun byte-array->string (arr)
+  "Convert array of (unsigned-byte 8) to string."
+  (octets-to-string (concatenate '(vector (unsigned-byte 8)) arr) :encoding :utf-8))
