@@ -1,70 +1,73 @@
 (in-package #:cl-neovim)
 
 (defparameter *msg-id* 0)
-(defparameter *nvim-type-list* (define-extension-types
-                                 '(0
-                                   Buffer
-                                   Window
-                                   Tabpage)))
 (defparameter *socket* NIL)
 
 (defun connect (&optional (host #(127 0 0 1)) (port 7777))
-  "Connect to the nvim process (via TCP socket)."
+  "Connect to the TCP socket."
   (setf *socket* (socket-connect host port :element-type '(unsigned-byte 8))))
 
 (defun establish-listener ()
-  "Basic polling loop for input from nvim."
+  "Basic polling loop for input from *socket*"
   (unless *socket* (connect))
-  (loop do (progn (wait-for-input *socket*)
-                  (multiple-value-bind (id req args) (get-result *socket*)
-                    (format t "received: ~A ~A ~A~%" id req args)
-                    (send-msg (command->response "OK" id))))))
+  (let ((*decoder-prefers-lists* T)
+        (*extended-types* *nvim-type-list*))
+    (loop do (progn (wait-for-input *socket*)
+                    (multiple-value-bind (msg-id msg-result) (get-result)
+                      (send-msg (make-rpc-response msg-id NIL "Working!")))))))
 
 (defun send-msg (msg)
-  "Send encoded msg to nvim."
+  "Send encoded msg to *socket*"
   (loop for m across msg
         do (write-byte m (socket-stream *socket*))
         finally (force-output (socket-stream *socket*))))
+
+(defun get-result ()
+  "Wait for response from *socket*."
+  (parse-msg (decode-stream (socket-stream *socket*))))
+
+(defun parse-msg (msg)
+  "Call appropriate parse function based on type of message."
+  (funcall (cdr (assoc (first msg) *msg-parsers*)) msg))
 
 (defun byte-array->string (arr)
   "Convert array of (unsigned-byte 8) to string."
   (octets-to-string (concatenate '(vector (unsigned-byte 8)) arr) :encoding :utf-8))
 
-(defun parse-request (request)
-  "Parse the request received from nvim socket."
-  (destructuring-bind (_ msg-id req args) request
-    (declare (ignore _))
-    (values msg-id (byte-array->string req) args)))
+(eval-when (:compile-toplevel)
+  (defun symbol-append (&rest symbols) 
+    (intern (apply #'concatenate 'string (mapcar #'symbol-name symbols))))
+  (defun mklst (obj) (if (listp obj) obj (list obj)))
+  (defun keep-lsts-with (kwd lst) (remove-if-not #'(lambda (c) (getf (cdr c) kwd)) (mapcar #'mklst lst)))
+  (defun remove-lsts-with (kwd lst) (remove-if #'(lambda (c) (getf (cdr c) kwd)) (mapcar #'mklst lst)))
+  (defun first-els (lst) (mapcar #'(lambda (c) (first (mklst c))) (mapcar #'mklst lst)))
+  (defparameter *msg-parsers* '()))
 
-(defun parse-response (response)
-  "Parse the response received from nvim socket."
-  (destructuring-bind (_ msg-id err result) response
-    (declare (ignore _))
-    (if err
-      (values NIL msg-id (byte-array->string (first err)))
-      (values T msg-id result)))) 
+(defmacro msg-rpc-type (type-name type-id &rest components)
+  (let ((make-name (symbol-append 'make-rpc- type-name))
+        (predicate-name (symbol-append 'rpc- type-name '-p))
+        (parse-name (symbol-append 'parse-rpc- type-name)) 
+        (components (mapcar #'mklst components)))
+    `(progn
+       (defun ,make-name ,(first-els (remove-lsts-with :make components))
+         (encode (list ,type-id ,@(mapcar #'(lambda (c) (or (getf (rest c) :make) (first c))) components))))
+       (defun ,predicate-name (msg)
+         (= (first msg) ,type-id))
+       (defun ,parse-name (msg)
+         (destructuring-bind ,(cons 'msg-type (first-els components)) msg
+           (declare (ignore msg-type))
+           ,@(mapcar #'(lambda (c) (getf (rest c) :parse)) (keep-lsts-with :parse components))
+           (values ,@(first-els (remove-lsts-with :dont-export components)))))
+       (setf *msg-parsers* (acons ,type-id #',parse-name *msg-parsers*)))))
 
-(defun msg-type (msg)
-  (if (= (first msg) 0) 'request 'response))
-
-(defun get-result ()
-  "Wait for response from nvim."
-  (let* ((*decoder-prefers-lists* T)
-         (*extended-types* *nvim-type-list*)
-         (msg (decode-stream (socket-stream *socket*)))
-         (msg-parsing-fun (if (eq (msg-type msg) 'request) #'parse-request #'parse-response)))
-    (multiple-value-bind (succ msg-id result) (funcall msg-parsing-fun msg)
-      (declare (ignore msg-id))
-      (if succ result (error result)))))
-
-(defun command->request (command &optional args)
-  "Encode nvim command and optional args into msgpack packet."
-  (let ((*extended-types* *nvim-type-list*)
-         (*decoder-prefers-lists* T))
-    (encode `(0 ,(incf *msg-id*) ,command ,(or args #())))))
-
-(defun command->response (command msg-id &optional args)
-  "Encode nvim command and optional args into msgpack packet."
-  (let ((*extended-types* *nvim-type-list*)
-        (*decoder-prefers-lists* T))
-    (encode `(1 ,msg-id ,command ,(or args #())))))
+(msg-rpc-type request 0
+              (msg-id :make (incf *msg-id*))
+              msg-method
+              msg-params)
+(msg-rpc-type response 1
+              msg-id
+              (msg-error :parse (if msg-error (error (byte-array->string (second msg-error)))) :dont-export T)
+              msg-result)
+(msg-rpc-type notification 2
+              msg-method
+              msg-params)
