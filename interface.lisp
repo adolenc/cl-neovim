@@ -15,17 +15,11 @@
 
 (defun setterp (name) "Is name a setter?" (search "set_" name))
 
-(defun drop-substring (str substr)
-  "Remove first occurence of substr in str."
-  (aif (search substr str)
-    (concatenate 'string (subseq str 0 it) (subseq str (+ it (length substr))))  
-    str))
-
-(defun clean-up-name (name &optional (modifiers '("vim_" "get_" "set_")))
+(defun clean-up-name (name &optional (modifiers '("vim" "get" "set")))
   "Removes all substrings specified in modifiers from name."
-  (if modifiers
-    (clean-up-name (drop-substring name (first modifiers)) (rest modifiers))
-    name))
+  (let* ((components (split-sequence #\_ name))
+         (main-components (remove-if #'(lambda (c) (member c modifiers :test #'string=)) components)))
+    (format nil "~{~A~^_~}" main-components)))
 
 ) ; end of eval-when
 
