@@ -5,9 +5,8 @@
   (:use #:cl
         #:babel
         #:messagepack
-        #:usocket
         #:split-sequence
-        #:anaphora)
+        #:cl-async)
   (:export #:connect
            #:send-command))
 
