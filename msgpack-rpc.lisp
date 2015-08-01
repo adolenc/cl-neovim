@@ -5,7 +5,6 @@
 (defparameter *listener-thread* NIL)
 
 (eval-when (:compile-toplevel)
-  (defparameter *msg-parsers* '()) 
   (defun symbol-append (&rest symbols) 
     (intern (apply #'concatenate 'string (mapcar #'symbol-name symbols))))
   (defun mklst (obj) (if (listp obj) obj (list obj)))
@@ -14,9 +13,9 @@
   (defun first-els (lst) (mapcar #'(lambda (c) (first (mklst c))) (mapcar #'mklst lst))))
 
 (defmacro msg-rpc-type (type-name type-id &rest components)
-  (let ((make-name (symbol-append 'make-rpc- type-name))
-        (predicate-name (symbol-append 'rpc- type-name '-p))
-        (parse-name (symbol-append 'parse-rpc- type-name)) 
+  (let ((make-name (symbol-append 'make- type-name))
+        (predicate-name (symbol-append type-name 'p))
+        (parse-name (symbol-append 'parse- type-name)) 
         (components (mapcar #'mklst components)))
     `(progn
        (defun ,make-name ,(first-els (remove-lsts-with :make components))
@@ -27,8 +26,7 @@
          (destructuring-bind ,(cons 'msg-type (first-els components)) msg
            (declare (ignore msg-type))
            ,@(mapcar #'(lambda (c) (getf (rest c) :parse)) (keep-lsts-with :parse components))
-           (values ,@(first-els (remove-lsts-with :dont-export components)))))
-       (setf *msg-parsers* (acons ,type-id #',parse-name *msg-parsers*)))))
+           (values ,@(first-els (remove-lsts-with :dont-export components))))))))
 
 (msg-rpc-type request 0
               (msg-id :make (incf *msg-id*))
@@ -42,29 +40,9 @@
               msg-method
               msg-params)
 
-
-(defun connect (&optional (host #(127 0 0 1)) (port 7777))
-  "Connect to the TCP socket."
-  (setf *socket* (socket-connect host port :element-type '(unsigned-byte 8))))
-
-; (defun send-msg (msg)
-;   "Send encoded msg to *socket*"
-;   (loop for m across msg
-;         do (write-byte m (socket-stream *socket*))
-;         finally (force-output (socket-stream *socket*))))
-
-(defun get-result ()
-  "Wait for response from *socket*."
-  (parse-msg (decode-stream (socket-stream *socket*))))
-
-(defun parse-msg (msg)
-  "Call appropriate parse function based on type of message."
-  (funcall (cdr (assoc (first msg) *msg-parsers*)) msg))
-
 (defun byte-array->string (arr)
   "Convert array of (unsigned-byte 8) to string."
   (octets-to-string (concatenate '(vector (unsigned-byte 8)) arr) :encoding :utf-8))
-
 
 (defparameter *global-event-base* nil)
 ;
@@ -90,10 +68,10 @@
 ;          (*extended-types* *nvim-type-list*)
 ;          (mpk::*bin-as-string* T)
 ;          (msg (decode data)))
-;     (cond ((rpc-request-p msg) 
+;     (cond ((requestp msg) 
 ;            (multiple-value-bind (msg-id msg-method msg-params) (parse-msg msg)
 ;              (as:write-socket-data socket
-;                                    (make-rpc-response msg-id (format NIL "Replying to request ~A ~A(~{~A~^, ~})" msg-id msg-method (first msg-params)) NIL))))
+;                                    (make-response msg-id (format NIL "Replying to request ~A ~A(~{~A~^, ~})" msg-id msg-method (first msg-params)) NIL))))
 ;           )))
 ;
 ; (defun send-msg (msg)
@@ -115,54 +93,52 @@
                          (as:exit-event-loop))))
 (defun pipe-client (name)
   (format t "Starting pipe client.~%")
-  (setf *global-event-base* cl-async-util::*event-base*
+  (setf *global-event-base* cl-async-base:*event-base*
         *socket* (as:pipe-connect name #'handle-new-msg))
   (as:signal-handler 2 (lambda (sig)
                          (declare (ignore sig))
                          (as:exit-event-loop))))
 
 (defun handle-new-msg (socket data)
-  (format t "RECEIVED ~A~%" (decode data))
-  (force-output)
   (let* ((*decoder-prefers-lists* T)
          (*extended-types* *nvim-type-list*)
          (mpk::*bin-as-string* T)
          (msg (decode data)))
-    (format t "INSIDE LET: ~A~%" msg)
-    (cond ((rpc-request-p msg) 
-           (multiple-value-bind (msg-id msg-method msg-params) (parse-msg msg)
-             (as:write-socket-data socket
-                                   (make-rpc-response msg-id (format NIL "Replying to request ~A ~A(~{~A~^, ~})" msg-id msg-method (first msg-params)) NIL) :force t)
+    (cond ((requestp msg) 
+           (multiple-value-bind (msg-id msg-method msg-params) (parse-request msg)
+             (format t "Received request [~A] ~A(~{~A~^, ~})~%" msg-id msg-method (first msg-params))
+             (send-msg (make-response msg-id (format NIL "Replying to request [~A] ~A(~{~A~^, ~})" msg-id msg-method (first msg-params)) NIL))))
+          ((responsep msg) 
+           (multiple-value-bind (msg-id msg-result) (parse-response msg)
+             (format t "Received response [~A] ~A~%" msg-id msg-result)
              (force-output)))
-      ((rpc-response-p msg) 
-           (multiple-value-bind (msg-id msg-result) (parse-msg msg)
-             (format NIL "Received response ~A ~A~%" msg-id msg-result)
+          ((notificationp msg)
+           (multiple-value-bind (msg-method msg-params) (parse-notification msg)
+             (format t "Received notification ~A(~{~A~^, ~})~%" msg-method (first msg-params))
              (force-output))))))
 
 (defun send-msg (msg)
   (if *socket*
-    (let* ((cl-async-base:*event-base* *global-event-base*)
-           (cl-async-base:*data-registry* (cl-async-base:event-base-data-registry cl-async-base:*event-base*))
-           (cl-async-base:*function-registry* (cl-async-base:event-base-function-registry cl-async-base:*event-base*))
-           ; (*buffer-writes* *buffer-writes*)
-           ; (*buffer-size* *buffer-size*)
-           ; (*output-buffer* (static-vectors:make-static-vector *buffer-size* :element-type 'octet))
-           ; (*input-buffer* (static-vectors:make-static-vector *buffer-size* :element-type 'octet))
-           ; (*data-registry* (event-base-data-registry *event-base*))
-           ; (*function-registry* (event-base-function-registry *event-base*))
-           ; (callbacks nil) 
-          )
-      (format t "TRYING TO SEND MSG: ~A~%" msg)
-      (as:write-socket-data *socket* msg :force t))))
+    (if cl-async-base:*event-base*
+      (as:write-socket-data *socket* msg :force t)    
+      ;; Because we can't just send message from a thread doesn't have event-loop
+      ;; running and since there doesn't seem to be a better way of doing this
+      ;; in cl-async, we have to make this thread know about an event loop
+      ;; running in the other thread first.
+      (let* ((cl-async-base:*event-base* *global-event-base*)
+             (cl-async-base:*data-registry* (cl-async-base:event-base-data-registry cl-async-base:*event-base*))
+             (cl-async-base:*function-registry* (cl-async-base:event-base-function-registry cl-async-base:*event-base*))
+             ; (*buffer-writes* *buffer-writes*)
+             ; (*buffer-size* *buffer-size*)
+             ; (*output-buffer* (static-vectors:make-static-vector *buffer-size* :element-type 'octet))
+             ; (*input-buffer* (static-vectors:make-static-vector *buffer-size* :element-type 'octet))
+             ; (*data-registry* (event-base-data-registry *event-base*))
+             ; (*function-registry* (event-base-function-registry *event-base*))
+             ; (callbacks nil)
+             )
+        (as:write-socket-data *socket* msg :force t)))))
 
-(defun establish-listener (&key (host "127.0.0.1") (port 7777) fn)
-  ; (cond (fn (as:start-event-loop #'(lambda () (pipe-client fn))))
-  ;        ((and host port) (as:start-event-loop #'(lambda () (tcp-client host port)))))
-
-  (setf *listener-thread* (bt:make-thread (lambda () (cond (fn (as:start-event-loop #'(lambda () (pipe-client fn))))
-                                                           ((and host port) (as:start-event-loop #'(lambda () (tcp-client host port)))))) :name "Event loop"))
-  ; (format *standard-output* "WAITING...")
-)
-
-(defun kill-listener ()
-  (bt:join-thread *listener-thread*))
+(defun run (&key (host "127.0.0.1") (port 7777) fn)
+  (bt:make-thread (lambda () (cond (fn (as:start-event-loop #'(lambda () (pipe-client fn))))
+                                   ((and host port) (as:start-event-loop #'(lambda () (tcp-client host port)))))) :name "Event loop")
+  (format *standard-output* "Event loop is running..."))
