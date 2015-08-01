@@ -45,59 +45,17 @@
   (octets-to-string (concatenate '(vector (unsigned-byte 8)) arr) :encoding :utf-8))
 
 (defparameter *global-event-base* nil)
-;
-; (defun tcp-client (host port)
-;   (format t "Starting TCP client.~%")
-;   (setf *global-event-base* cl-async-util::*event-base*
-;         *socket* (as:tcp-connect host port #'handle-new-msg
-;                                  (lambda (err) (format t "listener event: ~a~%" err))))
-;   (as:signal-handler 2 (lambda (sig)
-;                          (declare (ignore sig))
-;                          (as:exit-event-loop))))
-; (defun pipe-client (name)
-;   (format t "Starting pipe client.~%")
-;   (setf *global-event-base* cl-async-util::*event-base*
-;         *socket* (as:pipe-connect name #'handle-new-msg))
-;   (as:signal-handler 2 (lambda (sig)
-;                          (declare (ignore sig))
-;                          (as:exit-event-loop))))
-;
-; (defun handle-new-msg (socket data)
-;   (format t "RECEIVED ~A ~A~%" data (decode data))
-;   (let* ((*decoder-prefers-lists* T)
-;          (*extended-types* *nvim-type-list*)
-;          (mpk::*bin-as-string* T)
-;          (msg (decode data)))
-;     (cond ((requestp msg) 
-;            (multiple-value-bind (msg-id msg-method msg-params) (parse-msg msg)
-;              (as:write-socket-data socket
-;                                    (make-response msg-id (format NIL "Replying to request ~A ~A(~{~A~^, ~})" msg-id msg-method (first msg-params)) NIL))))
-;           )))
-;
-; (defun send-msg (msg)
-;   (if *socket*
-;     (let ((cl-async-util::*event-base* *global-event-base*))
-;       (as:write-socket-data *socket* msg))  
-;     ; (as:write-socket-data *socket* msg)  
-;     ; (write-sequence msg *socket*)
-;     ))
 
+(defun run-listener (listener &rest listener-args)
+  (as:with-event-loop ()
+    (format t "Starting listener...~%")
+    (setf *global-event-base* cl-async-base:*event-base*
+          *socket* (apply listener (append listener-args
+                                           (list #'handle-new-msg))))
+    (as:signal-handler 2 #'(lambda (sig)
+                             (declare (ignore sig))
+                             (as:exit-event-loop)))))
 
-(defun tcp-client (host port)
-  (format t "Starting TCP client.~%")
-  (setf *global-event-base* cl-async-base:*event-base*
-        *socket* (as:tcp-connect host port #'handle-new-msg
-                                 (lambda (err) (format t "listener event: ~a~%" err))))
-  (as:signal-handler 2 (lambda (sig)
-                         (declare (ignore sig))
-                         (as:exit-event-loop))))
-(defun pipe-client (name)
-  (format t "Starting pipe client.~%")
-  (setf *global-event-base* cl-async-base:*event-base*
-        *socket* (as:pipe-connect name #'handle-new-msg))
-  (as:signal-handler 2 (lambda (sig)
-                         (declare (ignore sig))
-                         (as:exit-event-loop))))
 
 (defun handle-new-msg (socket data)
   (let* ((*decoder-prefers-lists* T)
@@ -139,6 +97,7 @@
         (as:write-socket-data *socket* msg :force t)))))
 
 (defun run (&key (host "127.0.0.1") (port 7777) fn)
-  (bt:make-thread (lambda () (cond (fn (as:start-event-loop #'(lambda () (pipe-client fn))))
-                                   ((and host port) (as:start-event-loop #'(lambda () (tcp-client host port)))))) :name "Event loop")
+  (bt:make-thread (lambda () (cond (fn              (run-listener #'as:pipe-connect fn))
+                                   ((and host port) (run-listener #'as:tcp-connect host port))))
+                  :name "Event loop")
   (format *standard-output* "Event loop is running..."))
