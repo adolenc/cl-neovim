@@ -62,7 +62,6 @@
          (msg (decode data)))
     (cond ((requestp msg) 
            (multiple-value-bind (msg-id msg-method msg-params) (parse-request msg)
-             (format t "Received request [~A] ~A(~{~A~^, ~})~%" msg-id msg-method (first msg-params))
              (handler-case (send-response msg-id NIL
                                           (apply (gethash (intern-foreign-name msg-method) *registered-callbacks*)
                                                             (first msg-params)))
@@ -73,8 +72,8 @@
              (force-output)))
           ((notificationp msg)
            (multiple-value-bind (msg-method msg-params) (parse-notification msg)
-             (format t "Received notification ~A(~{~A~^, ~})~%" msg-method (first msg-params))
-             (force-output))))))
+             (handler-case (apply (gethash (intern-foreign-name msg-method) *registered-callbacks*) (first msg-params))
+               (error (desc) (warn (format nil "Unhandled notification ~A(~{~A~^, ~}):~%~A~%" msg-method (first msg-params) desc)))))))))
 
 (defun send (bytes)
   "Send bytes via *socket*."
