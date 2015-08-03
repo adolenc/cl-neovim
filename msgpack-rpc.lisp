@@ -3,13 +3,22 @@
 (defparameter *msg-id* 0 "Unique id for messages.")
 (defparameter *socket* NIL "Socket used for reading/writing.")
 
+(defparameter *active-requests* (make-hash-table) "Hash table holding active requests (and their eventual results).")
+(defparameter *registered-callbacks* (make-hash-table) "Hash table holding registered callbacks.")
+
+(defparameter *global-event-base* nil "Event base of the running event loop.")
+
+
 (eval-when (:compile-toplevel)
-  (defun symbol-append (&rest symbols) 
-    (intern (apply #'concatenate 'string (mapcar #'symbol-name symbols))))
-  (defun mklst (obj) (if (listp obj) obj (list obj)))
-  (defun keep-lsts-with (kwd lst) (remove-if-not #'(lambda (c) (getf (cdr c) kwd)) (mapcar #'mklst lst)))
-  (defun remove-lsts-with (kwd lst) (remove-if #'(lambda (c) (getf (cdr c) kwd)) (mapcar #'mklst lst)))
-  (defun first-els (lst) (mapcar #'(lambda (c) (first (mklst c))) (mapcar #'mklst lst))))
+
+(defun symbol-append (&rest symbols) 
+  (intern (apply #'concatenate 'string (mapcar #'symbol-name symbols))))
+(defun mklst (obj) (if (listp obj) obj (list obj)))
+(defun keep-lsts-with (kwd lst) (remove-if-not #'(lambda (c) (getf (cdr c) kwd)) (mapcar #'mklst lst)))
+(defun remove-lsts-with (kwd lst) (remove-if #'(lambda (c) (getf (cdr c) kwd)) (mapcar #'mklst lst)))
+(defun first-els (lst) (mapcar #'(lambda (c) (first (mklst c))) (mapcar #'mklst lst)))
+
+)
 
 (defmacro msg-rpc-type (type-name type-id &rest components)
   (let ((make-name (symbol-append 'make- type-name))
@@ -42,7 +51,8 @@
               msg-method
               msg-params)
 
-(defparameter *global-event-base* nil "Event base of the running event loop.")
+(defun intern-foreign-name (n)
+  (intern n 'nvim))
 
 (defun handle-new-msg (socket data)
   "Handle a new message based on its type and contents."
@@ -53,7 +63,10 @@
     (cond ((requestp msg) 
            (multiple-value-bind (msg-id msg-method msg-params) (parse-request msg)
              (format t "Received request [~A] ~A(~{~A~^, ~})~%" msg-id msg-method (first msg-params))
-             (send-response msg-id (format NIL "Replying to request [~A] ~A(~{~A~^, ~})" msg-id msg-method (first msg-params)) NIL)))
+             (handler-case (send-response msg-id NIL
+                                          (apply (gethash (intern-foreign-name msg-method) *registered-callbacks*)
+                                                            (first msg-params)))
+               (error (desc) (send-response msg-id (format nil "~A" desc) NIL)))))
           ((responsep msg) 
            (multiple-value-bind (msg-id msg-result) (parse-response msg)
              (format t "Received response [~A] ~A~%" msg-id msg-result)
@@ -85,6 +98,12 @@
     (as:signal-handler 2 #'(lambda (sig)
                              (declare (ignore sig))
                              (as:exit-event-loop)))))
+
+(defun remove-callback (name)
+  (remhash name *registered-callbacks*))
+
+(defun register-callback (name fn)
+  (setf (gethash name *registered-callbacks*) fn))
 
 (defun run (&key (host "127.0.0.1") (port 7777) filename)
   "Run listener in an event loop inside a background thread."

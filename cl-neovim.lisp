@@ -7,11 +7,11 @@
                                    Tabpage)))
 
 (defmacro defcallback (name args &body body)
-  `(register-method ,name #'(lambda ,args ,@body)))
+  `(register-callback ',name #'(lambda ,args ,@body)))
 
 (defun send-command (command &rest args)
   "Send nvim command to neovim socket and return the result."
   (unless *socket* (connect))
   (let ((*decoder-prefers-lists* T)
         (*extended-types* *nvim-type-list*))
-    (send-msg (make-rpc-request command (or args #())))))
+    (send-request command (or args #()))))
