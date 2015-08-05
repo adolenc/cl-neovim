@@ -1,4 +1,4 @@
-(in-package #:cl-neovim)
+(in-package #:cl-msgpack-rpc)
 
 (defparameter *msg-id* 0 "Unique id for messages.")
 (defparameter *socket* NIL "Socket used for reading/writing.")
@@ -7,7 +7,7 @@
 (defparameter *registered-callbacks* (make-hash-table) "Hash table holding registered callbacks.")
 
 (defparameter *global-event-base* nil "Event base of the running event loop.")
-(defparameter *intern-foreign-name-fn* #'(lambda (n) (intern n 'nvim)) "Function used for transforming name from rcp string to lisp symbol.")
+(defparameter *intern-foreign-name-fn* #'(lambda (n) (intern n 'mrpc)) "Function used for transforming name from rcp string to lisp symbol.")
 
 
 (eval-when (:compile-toplevel)
@@ -29,7 +29,7 @@
         (components (mapcar #'mklst components)))
     `(progn
        (defun ,make-name ,(first-els (remove-lsts-with :make components))
-         (concatenate '(vector (unsigned-byte 8)) (encode (list ,type-id ,@(mapcar #'(lambda (c) (or (getf (rest c) :make) (first c))) components)))))
+         (concatenate '(vector (unsigned-byte 8)) (mpk:encode (list ,type-id ,@(mapcar #'(lambda (c) (or (getf (rest c) :make) (first c))) components)))))
        (defun ,send-name ,(first-els (remove-lsts-with :make components))
          (send (,make-name ,@(first-els (remove-lsts-with :make components)))))
        (defun ,predicate-name (msg)
@@ -48,10 +48,9 @@
 
 (defun handle-new-msg (socket data)
   "Handle a new message based on its type and contents."
-  (let* ((*decoder-prefers-lists* T)
-         (*extended-types* *nvim-type-list*)
+  (let* ((mpk:*decoder-prefers-lists* T)
          (mpk::*bin-as-string* T)
-         (msg (decode data)))
+         (msg (mpk:decode data)))
     (cond ((requestp msg)
            (with-request msg
              (handler-case (send-response msg-id NIL
@@ -91,15 +90,20 @@
                              (declare (ignore sig))
                              (as:exit-event-loop)))))
 
-(defun make-promise () (cons NIL NIL))
+(defun make-promise () "A constructor for a quick and dirty promise." (cons NIL NIL))
 
-(defun finish (promise) (loop until (car promise) finally (return (cdr promise))))
+(defun finish (promise)
+  "Block the thread until a promise is resolved."
+  (loop until (car promise) finally (return (cdr promise))))
 
 (defun fulfill (promise result)
+  "Fill the result into promise and toggle its resolved switch."
   (setf (cdr promise) result
         (car promise) T))
 
 (defun request (fn &optional params (async NIL))
+  "Send a request for function fn with params. Optionally specify you want to
+   receive results asynchroniously, which returns a promise."
   (let ((result (make-promise)))
     (setf (gethash (1+ *msg-id*) *active-requests*) result)
     (send-request fn (or params #()))
@@ -108,18 +112,22 @@
       (finish result))))
 
 (defun notify (fn &optional params)
+  "Send a notification for function fn with params."
   (send-notification fn (or params #())))
 
 (defun register-callback (name fn)
+  "Register a function which will get called when server sends
+   request/notification for `name'."
   (setf (gethash name *registered-callbacks*) fn))
 
 (defun remove-callback (name)
+  "Remove a registered function."
   (remhash name *registered-callbacks*))
 
-
-(defun run (&key (host "127.0.0.1") (port 7777) filename)
+(defun run (&key host port filename)
   "Run listener in an event loop inside a background thread."
   (bt:make-thread (lambda () (cond (filename        (run-listener #'as:pipe-connect filename))
-                                   ((and host port) (run-listener #'as:tcp-connect host port))))
-                  :name "Event loop"))
-
+                                   ((and host port) (run-listener #'as:tcp-connect host port))
+                                   (t (error "Currently only tcp/unix sockets are supported."))))
+                  :name "Event loop"
+                  :initial-bindings `((mpk:*extended-types* . ',*extended-types*))))
