@@ -25,7 +25,7 @@
   (let ((make-name (symbol-append 'make- type-name))
         (send-name (symbol-append 'send- type-name))
         (predicate-name (symbol-append type-name 'p))
-        (parse-name (symbol-append 'parse- type-name)) 
+        (with-name (symbol-append 'with- type-name)) 
         (components (mapcar #'mklst components)))
     `(progn
        (defun ,make-name ,(first-els (remove-lsts-with :make components))
@@ -34,23 +34,14 @@
          (send (,make-name ,@(first-els (remove-lsts-with :make components)))))
        (defun ,predicate-name (msg)
          (= (first msg) ,type-id))
-       (defun ,parse-name (msg)
-         (destructuring-bind ,(cons 'msg-type (first-els components)) msg
-           (declare (ignore msg-type))
-           ,@(mapcar #'(lambda (c) (getf (rest c) :parse)) (keep-lsts-with :parse components))
-           (values ,@(first-els (remove-lsts-with :dont-export components))))))))
+       (defmacro ,with-name (msg &body body)
+         `(destructuring-bind ,(cons 'msg-type ',(first-els components)) msg
+             (declare (ignore msg-type))
+             ,@body)))))
 
-(msg-rpc-type request 0
-              (msg-id :make (incf *msg-id*))
-              msg-method
-              msg-params)
-(msg-rpc-type response 1
-              msg-id
-              (msg-error :parse (if msg-error (error (second msg-error))) :dont-export T)
-              msg-result)
-(msg-rpc-type notification 2
-              msg-method
-              msg-params)
+(msg-rpc-type request 0 (msg-id :make (incf *msg-id*)) msg-method msg-params)
+(msg-rpc-type response 1 msg-id msg-error msg-result)
+(msg-rpc-type notification 2 msg-method msg-params)
 
 (defun intern-foreign-name (n)
   (funcall *intern-foreign-name-fn* n))
@@ -62,17 +53,17 @@
          (mpk::*bin-as-string* T)
          (msg (decode data)))
     (cond ((requestp msg)
-           (multiple-value-bind (msg-id msg-method msg-params) (parse-request msg)
+           (with-request msg
              (handler-case (send-response msg-id NIL
                                           (apply (gethash (intern-foreign-name msg-method) *registered-callbacks*)
                                                             (first msg-params)))
                (error (desc) (send-response msg-id (format nil "~A" desc) NIL)))))
           ((responsep msg)
-           (multiple-value-bind (msg-id msg-result) (parse-response msg)
+           (with-response msg
              (fulfill (gethash msg-id *active-requests*) msg-result)
              (remhash msg-id *active-requests*)))
           ((notificationp msg)
-           (multiple-value-bind (msg-method msg-params) (parse-notification msg)
+           (with-notification msg
              (handler-case (apply (gethash (intern-foreign-name msg-method) *registered-callbacks*) (first msg-params))
                (error (desc) (warn (format nil "Unhandled notification ~A(~{~A~^, ~}):~%~A~%" msg-method (first msg-params) desc)))))))))
 
