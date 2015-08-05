@@ -7,6 +7,7 @@
 (defparameter *registered-callbacks* (make-hash-table) "Hash table holding registered callbacks.")
 
 (defparameter *global-event-base* nil "Event base of the running event loop.")
+(defparameter *intern-foreign-name-fn* #'(lambda (n) (intern n 'nvim)) "Function used for transforming name from rcp string to lisp symbol.")
 
 
 (eval-when (:compile-toplevel)
@@ -52,7 +53,7 @@
               msg-params)
 
 (defun intern-foreign-name (n)
-  (intern n 'nvim))
+  (funcall *intern-foreign-name-fn* n))
 
 (defun handle-new-msg (socket data)
   "Handle a new message based on its type and contents."
@@ -60,16 +61,16 @@
          (*extended-types* *nvim-type-list*)
          (mpk::*bin-as-string* T)
          (msg (decode data)))
-    (cond ((requestp msg) 
+    (cond ((requestp msg)
            (multiple-value-bind (msg-id msg-method msg-params) (parse-request msg)
              (handler-case (send-response msg-id NIL
                                           (apply (gethash (intern-foreign-name msg-method) *registered-callbacks*)
                                                             (first msg-params)))
                (error (desc) (send-response msg-id (format nil "~A" desc) NIL)))))
-          ((responsep msg) 
+          ((responsep msg)
            (multiple-value-bind (msg-id msg-result) (parse-response msg)
-             (format t "Received response [~A] ~A~%" msg-id msg-result)
-             (force-output)))
+             (fulfill (gethash msg-id *active-requests*) msg-result)
+             (remhash msg-id *active-requests*)))
           ((notificationp msg)
            (multiple-value-bind (msg-method msg-params) (parse-notification msg)
              (handler-case (apply (gethash (intern-foreign-name msg-method) *registered-callbacks*) (first msg-params))
@@ -85,6 +86,7 @@
       ;; in cl-async, we have to make this thread know about an event loop
       ;; running in the other thread first.
       (let* ((cl-async-base:*event-base* *global-event-base*)
+             (cl-async-base:*data-registry* (cl-async-base:event-base-data-registry cl-async-base:*event-base*))
              (cl-async-base:*function-registry* (cl-async-base:event-base-function-registry cl-async-base:*event-base*)))
         (as:write-socket-data *socket* bytes :force t)))))
 
@@ -98,11 +100,31 @@
                              (declare (ignore sig))
                              (as:exit-event-loop)))))
 
-(defun remove-callback (name)
-  (remhash name *registered-callbacks*))
+(defun make-promise () (cons NIL NIL))
+
+(defun finish (promise) (loop until (car promise) finally (return (cdr promise))))
+
+(defun fulfill (promise result)
+  (setf (cdr promise) result
+        (car promise) T))
+
+(defun request (fn &optional params (async NIL))
+  (let ((result (make-promise)))
+    (setf (gethash (1+ *msg-id*) *active-requests*) result)
+    (send-request fn (or params #()))
+    (if async
+      result
+      (finish result))))
+
+(defun notify (fn &optional params)
+  (send-notification fn (or params #())))
 
 (defun register-callback (name fn)
   (setf (gethash name *registered-callbacks*) fn))
+
+(defun remove-callback (name)
+  (remhash name *registered-callbacks*))
+
 
 (defun run (&key (host "127.0.0.1") (port 7777) filename)
   "Run listener in an event loop inside a background thread."

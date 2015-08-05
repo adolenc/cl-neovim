@@ -11,7 +11,6 @@
 
 (defun send-command (command &rest args)
   "Send nvim command to neovim socket and return the result."
-  (unless *socket* (connect))
   (let ((*decoder-prefers-lists* T)
         (*extended-types* *nvim-type-list*))
-    (send-request command (or args #()))))
+    (request command args)))
