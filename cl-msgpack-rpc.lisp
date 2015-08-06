@@ -4,10 +4,10 @@
 (defparameter *socket* NIL "Socket used for reading/writing.")
 
 (defparameter *active-requests* (make-hash-table) "Hash table holding active requests (and their eventual results).")
-(defparameter *registered-callbacks* (make-hash-table) "Hash table holding registered callbacks.")
+(defparameter *request-callbacks* (make-hash-table :test 'equal) "Hash table holding callbacks for requests.")
+(defparameter *notification-callbacks* (make-hash-table :test 'equal) "Hash table holding callbacks for notifications.")
 
 (defparameter *global-event-base* nil "Event base of the running event loop.")
-(defparameter *intern-foreign-name-fn* #'(lambda (n) (intern n 'mrpc)) "Function used for transforming name from rcp string to lisp symbol.")
 
 
 (eval-when (:compile-toplevel)
@@ -43,9 +43,6 @@
 (msg-rpc-type response 1 msg-id msg-error msg-result)
 (msg-rpc-type notification 2 msg-method msg-params)
 
-(defun intern-foreign-name (n)
-  (funcall *intern-foreign-name-fn* n))
-
 (defun handle-new-msg (socket data)
   "Handle a new message based on its type and contents."
   (let* ((mpk:*decoder-prefers-lists* T)
@@ -54,7 +51,7 @@
     (cond ((requestp msg)
            (with-request msg
              (handler-case (send-response msg-id NIL
-                                          (apply (gethash (intern-foreign-name msg-method) *registered-callbacks*)
+                                          (apply (gethash msg-method *request-callbacks*)
                                                             (first msg-params)))
                (error (desc) (send-response msg-id (format nil "~A" desc) NIL)))))
           ((responsep msg)
@@ -63,7 +60,7 @@
              (remhash msg-id *active-requests*)))
           ((notificationp msg)
            (with-notification msg
-             (handler-case (apply (gethash (intern-foreign-name msg-method) *registered-callbacks*) (first msg-params))
+             (handler-case (apply (gethash msg-method *notifications-callbacks*) (first msg-params))
                (error (desc) (warn (format nil "Unhandled notification ~A(~{~A~^, ~}):~%~A~%" msg-method (first msg-params) desc)))))))))
 
 (defun send (bytes)
@@ -115,14 +112,23 @@
   "Send a notification for function fn with params."
   (send-notification fn (or params #())))
 
-(defun register-callback (name fn)
+(defun register-request-callback (name fn)
   "Register a function which will get called when server sends
-   request/notification for `name'."
-  (setf (gethash name *registered-callbacks*) fn))
+   request for `name'."
+  (setf (gethash name *request-callbacks*) fn))
 
-(defun remove-callback (name)
-  "Remove a registered function."
-  (remhash name *registered-callbacks*))
+(defun register-notification-callback (name fn)
+  "Register a function which will get called when server sends
+   request for `name'."
+  (setf (gethash name *notification-callbacks*) fn))
+
+(defun remove-request-callback (name)
+  "Remove a registered request callback."
+  (remhash name *request-callbacks*))
+
+(defun remove-notification-callback (name)
+  "Remove a registered notification callback."
+  (remhash name *notification-callbacks*))
 
 (defun run (&key host port filename)
   "Run listener in an event loop inside a background thread."

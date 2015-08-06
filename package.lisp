@@ -6,11 +6,12 @@
         #:messagepack
         #:bordeaux-threads 
         #:cl-async)
-  (:export #:*intern-foreign-name-fn*
-           #:*extended-types*
+  (:export #:*extended-types*
            #:define-extension-types
-           #:register-callback
-           #:remove-callback
+           #:register-request-callback
+           #:register-notification-callback
+           #:remove-request-callback
+           #:remove-notification-callback
            #:run 
            #:request
            #:notify
