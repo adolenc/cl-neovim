@@ -44,6 +44,7 @@
 (msg-rpc-type notification 2 msg-method msg-params)
 
 (defun handle-new-msg (socket data)
+  (declare (ignore socket))
   "Handle a new message based on its type and contents."
   (let* ((mpk:*decoder-prefers-lists* T)
          (mpk::*bin-as-string* T)
@@ -51,8 +52,8 @@
     (cond ((requestp msg)
            (with-request msg
              (handler-case (send-response msg-id NIL
-                                          (apply (gethash msg-method *request-callbacks*)
-                                                            (first msg-params)))
+                                          (let ((params (if (listp (first msg-params)) (first msg-params) msg-params)))
+                                            (apply (gethash msg-method *request-callbacks*) params)))
                (error (desc) (send-response msg-id (format nil "~A" desc) NIL)))))
           ((responsep msg)
            (with-response msg
@@ -60,22 +61,24 @@
              (remhash msg-id *active-requests*)))
           ((notificationp msg)
            (with-notification msg
-             (handler-case (apply (gethash msg-method *notifications-callbacks*) (first msg-params))
-               (error (desc) (warn (format nil "Unhandled notification ~A(~{~A~^, ~}):~%~A~%" msg-method (first msg-params) desc)))))))))
+             (handler-case (apply (gethash msg-method *notifications-callbacks*) (first (mklst msg-params)))
+               (error (desc) (warn (format nil "Unhandled notification ~A(~{~A~^, ~}):~%~A~%" msg-method (first (mklst msg-params)) desc)))))))))
 
 (defun send (bytes)
   "Send bytes via *socket*."
-  (if *socket*
-    (if cl-async-base:*event-base*
-      (as:write-socket-data *socket* bytes :force t)    
-      ;; Because we can't just send message from a thread doesn't have event-loop
-      ;; running and since there doesn't seem to be a better way of doing this
-      ;; in cl-async, we have to make this thread know about an event loop
-      ;; running in the other thread first.
-      (let* ((cl-async-base:*event-base* *global-event-base*)
-             (cl-async-base:*data-registry* (cl-async-base:event-base-data-registry cl-async-base:*event-base*))
-             (cl-async-base:*function-registry* (cl-async-base:event-base-function-registry cl-async-base:*event-base*)))
-        (as:write-socket-data *socket* bytes :force t)))))
+  (if (eq *socket* *standard-output*)
+    (loop for b across bytes do (write-byte b *socket*) finally (force-output))
+    (if *socket*
+      (if cl-async-base:*event-base*
+        (as:write-socket-data *socket* bytes :force t)    
+        ;; Because we can't just send message from a thread doesn't have event-loop
+        ;; running and since there doesn't seem to be a better way of doing this
+        ;; in cl-async, we have to make this thread know about an event loop
+        ;; running in the other thread first.
+        (let* ((cl-async-base:*event-base* *global-event-base*)
+               (cl-async-base:*data-registry* (cl-async-base:event-base-data-registry cl-async-base:*event-base*))
+               (cl-async-base:*function-registry* (cl-async-base:event-base-function-registry cl-async-base:*event-base*)))
+          (as:write-socket-data *socket* bytes :force t))))))
 
 (defun run-listener (listener &rest listener-args)
   "Run event loop with specified listener and listener arguments."
@@ -86,6 +89,29 @@
     (as:signal-handler 2 #'(lambda (sig)
                              (declare (ignore sig))
                              (as:exit-event-loop)))))
+
+(defun collect-input ()
+  "Block thread until data is available on *standard-input* and retrieve it."
+  (loop until (listen)
+        finally (return (loop while (listen)
+                              collect (read-byte *standard-input*)))) )
+
+(defun run-io-listener ()
+  "Run event loop listening to stdin and responding to stdout."
+  (as:with-event-loop ()
+    (setf *global-event-base* cl-async-base:*event-base*
+          *socket* *standard-output*)
+    (let* ((result nil)
+           (notifier (as:make-notifier (lambda ()
+                                         (handle-new-msg NIL result))
+                                       :single-shot NIL)))
+      (bt:make-thread (lambda ()
+                        (loop do (progn (setf result (collect-input))
+                                        (as:trigger-notifier notifier))))))
+                      (as:signal-handler 2 #'(lambda (sig)
+                                               (declare (ignore sig))
+                                               (as:exit-event-loop))))) 
+
 
 (defun make-promise () "A constructor for a quick and dirty promise." (cons NIL NIL))
 
@@ -130,10 +156,14 @@
   "Remove a registered notification callback."
   (remhash name *notification-callbacks*))
 
+
 (defun run (&key host port filename)
   "Run listener in an event loop inside a background thread."
-  (bt:make-thread (lambda () (cond (filename        (run-listener #'as:pipe-connect filename))
-                                   ((and host port) (run-listener #'as:tcp-connect host port))
-                                   (t (error "Currently only tcp/unix sockets are supported."))))
-                  :name "Event loop"
-                  :initial-bindings `((mpk:*extended-types* . ',*extended-types*))))
+  (if (or host port filename)
+    (bt:make-thread (lambda () (cond (filename        (run-listener #'as:pipe-connect filename))
+                                     ((and host port) (run-listener #'as:tcp-connect host port))
+                                     (t (error "You must specify both host and port."))))
+                    :name "Event loop"
+                    :initial-bindings `((mpk:*extended-types* . ',*extended-types*)))
+    (with-open-file (*error-output* "/tmp/err.log" :direction :output :if-exists :append :if-does-not-exist :create)
+      (run-io-listener))))
