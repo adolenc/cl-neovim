@@ -61,7 +61,8 @@
              (remhash msg-id *active-requests*)))
           ((notificationp msg)
            (with-notification msg
-             (handler-case (apply (gethash msg-method *notifications-callbacks*) (first (mklst msg-params)))
+             (handler-case (let ((params (if (listp (first msg-params)) (first msg-params) msg-params)))
+                             (apply (gethash msg-method *notification-callbacks*) params))
                (error (desc) (warn (format nil "Unhandled notification ~A(~{~A~^, ~}):~%~A~%" msg-method (first (mklst msg-params)) desc)))))))))
 
 (defun send (bytes)
@@ -93,6 +94,7 @@
 (defun collect-input ()
   "Block thread until data is available on *standard-input* and retrieve it."
   (loop until (listen)
+        do (sleep 0.001)
         finally (return (loop while (listen)
                               collect (read-byte *standard-input*)))) )
 

@@ -24,4 +24,7 @@
         #:babel
         #:split-sequence)
   (:export #:connect
-           #:defcallback))
+           #:defcallback
+           #:defcmd
+           #:defautocmd
+           #:defn))
