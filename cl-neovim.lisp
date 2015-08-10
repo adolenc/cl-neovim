@@ -29,7 +29,10 @@
     (values NIL body)))
 
 (defun define-callback (type name args sync opts body)
-  (let ((name (if (stringp name) name (lisp->vim-name name))))
+  (let ((name (if (stringp name) name (lisp->vim-name name)))
+        (opts (if (and (string= type "autocmd") (not (getf opts :pattern)))
+                (append '(:pattern "*") opts)
+                opts)))
     `(progn (push (plist->hash (list :sync ,(if sync 1 0)
                                      :name ,name
                                      :type ,type

@@ -65,7 +65,7 @@
            (with-notification msg
              (handler-case (let ((params (if (listp (first msg-params)) (first msg-params) msg-params)))
                              (apply (gethash msg-method *notification-callbacks*) params))
-               (error (desc) (warn (format nil "Unhandled notification ~A(~{~A~^, ~}):~%~A~%" msg-method (first (mklst msg-params)) desc)))))))))
+               (error (desc) (warn (format nil "Unhandled notification ~A(~{~A~^, ~}):~%~A~%" msg-method msg-params desc)))))))))
 
 (defun send (bytes)
   "Send bytes via *socket*."
