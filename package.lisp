@@ -27,4 +27,5 @@
            #:defcallback
            #:defcmd
            #:defautocmd
-           #:defn))
+           #:defn
+           #:finish))

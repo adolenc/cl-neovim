@@ -21,18 +21,29 @@
          (main-components (remove-if #'(lambda (c) (member c modifiers :test #'string=)) components)))
     (format nil "~{~A~^_~}" main-components)))
 
+(defun symbol-append (&rest symbols) 
+  "Concatenate symbol names and return resulting symbol."
+  (intern (apply #'concatenate 'string (mapcar #'symbol-name symbols))))
+
 ) ; end of eval-when
 
 (defmacro mdata->lisp-function (name args ret can-fail deferred)
   "Create and export functions from the parsed nvim's api."
   (declare (ignore ret can-fail deferred))
-  (let ((args (parse-args args))
-        (n (string->symbol (if (member name *dangerous-names* :test #'string-equal) name (clean-up-name name)))))
+  (let* ((args (parse-args args))
+         (n (string->symbol (if (member name *dangerous-names* :test #'string-equal) name (clean-up-name name))))
+         (async-n (symbol-append n '-a))
+         (sync-n (symbol-append n '-s))) 
     (if (setterp name)
-      `(defun (setf ,n) (,@(last args) ,@(butlast args))
-         (funcall #'send-command ,name ,@args))
+      `(progn (defun (setf ,n) (,@(last args) ,@(butlast args))
+                (funcall #'send-command ,name T ,@args)) 
+              (defun (setf ,sync-n) (,@(last args) ,@(butlast args))
+                (funcall #'send-command ,name NIL ,@args)))
       `(progn (defun ,n ,args
-                (funcall #'send-command ,name ,@args))
+                (funcall #'send-command ,name NIL ,@args))
+              (defun ,async-n ,args
+                (funcall #'send-command ,name T ,@args))
+              (export ',sync-n :cl-neovim)    
               (export ',n :cl-neovim)))))
 
 ;;;; Rest of file generated with `generate-api.lisp'.
