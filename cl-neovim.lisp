@@ -36,7 +36,11 @@
                                      :opts (plist->hash ',opts)))
                   *specs*)
             (,(if sync 'mrpc:register-request-callback 'mrpc:register-notification-callback)
-              ,(if *path* (format nil "~A:~A:~A" *path* type name) name)
+              ,(if *path*
+                 (concatenate 'string
+                              (format nil "~A:~A:~A" *path* type name)
+                              (if (string= type "autocmd") (format nil ":~A" (getf opts :pattern)) ""))
+                 name)
               #'(lambda ,args ,@body)))))
 
 (defun construct-callback (type name args)

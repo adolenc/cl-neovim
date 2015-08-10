@@ -33,7 +33,7 @@
   (let* ((args (parse-args args))
          (n (string->symbol (if (member name *dangerous-names* :test #'string-equal) name (clean-up-name name))))
          (async-n (symbol-append n '-a))
-         (sync-n (symbol-append n '-s))) 
+         (sync-n (symbol-append n '-s)))
     (if (setterp name)
       `(progn (defun (setf ,n) (,@(last args) ,@(butlast args))
                 (funcall #'send-command ,name T ,@args)) 
@@ -43,7 +43,7 @@
                 (funcall #'send-command ,name NIL ,@args))
               (defun ,async-n ,args
                 (funcall #'send-command ,name T ,@args))
-              (export ',sync-n :cl-neovim)    
+              (export ',async-n :cl-neovim)    
               (export ',n :cl-neovim)))))
 
 ;;;; Rest of file generated with `generate-api.lisp'.

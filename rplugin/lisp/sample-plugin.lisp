@@ -3,11 +3,6 @@
 
 (defparameter *calls* 0 "Counter for calls.")
 
-(defun increment-calls ()
-  (if (= *calls* 5)
-    (error "Too many calls!")
-    (incf *calls*)))
-
 (nvim:defcmd cmd :sync (&rest args)
   (opts (:range "" :nargs "*"))
   (increment-calls)
@@ -24,3 +19,8 @@
   (increment-calls)
   (setf (nvim:current-line)
         (format nil "Function: Called ~A times, args: ~A" *calls* args)))
+
+(defun increment-calls ()
+  (if (= *calls* 5)
+    (error "Too many calls!")
+    (incf *calls*)))

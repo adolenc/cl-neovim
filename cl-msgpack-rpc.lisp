@@ -1,13 +1,13 @@
 (in-package #:cl-msgpack-rpc)
 
-(defparameter *msg-id* 0 "Unique id for messages.")
-(defparameter *socket* NIL "Socket used for reading/writing.")
+(defvar *msg-id* 0 "Unique id for messages.")
+(defvar *socket* NIL "Socket used for reading/writing.")
 
-(defparameter *active-requests* (make-hash-table) "Hash table holding active requests (and their eventual results).")
-(defparameter *request-callbacks* (make-hash-table :test 'equal) "Hash table holding callbacks for requests.")
-(defparameter *notification-callbacks* (make-hash-table :test 'equal) "Hash table holding callbacks for notifications.")
+(defvar *active-requests* (make-hash-table) "Hash table holding active requests (and their eventual results).")
+(defvar *request-callbacks* (make-hash-table :test 'equal) "Hash table holding callbacks for requests.")
+(defvar *notification-callbacks* (make-hash-table :test 'equal) "Hash table holding callbacks for notifications.")
 
-(defparameter *global-event-base* nil "Event base of the running event loop.")
+(defvar *global-event-base* nil "Event base of the running event loop.")
 
 
 (eval-when (:compile-toplevel)
@@ -49,6 +49,8 @@
   (let* ((mpk:*decoder-prefers-lists* T)
          (mpk::*bin-as-string* T)
          (msg (mpk:decode data)))
+    (with-open-file (s "/tmp/s.log" :direction :output :if-exists :append :if-does-not-exist :create)
+      (format s "> ~A~%" msg))
     (cond ((requestp msg)
            (with-request msg
              (handler-case (send-response msg-id NIL
@@ -143,11 +145,15 @@
 (defun register-request-callback (name fn)
   "Register a function which will get called when server sends
    request for `name'."
+  (with-open-file (s "/tmp/s.log" :direction :output :if-exists :append :if-does-not-exist :create)
+    (format s "REG-R: ~A~%" name))
   (setf (gethash name *request-callbacks*) fn))
 
 (defun register-notification-callback (name fn)
   "Register a function which will get called when server sends
    request for `name'."
+  (with-open-file (s "/tmp/s.log" :direction :output :if-exists :append :if-does-not-exist :create)
+    (format s "REG-N: ~A~%" name))
   (setf (gethash name *notification-callbacks*) fn))
 
 (defun remove-request-callback (name)
