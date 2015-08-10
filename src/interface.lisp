@@ -38,12 +38,14 @@
       `(progn (defun (setf ,n) (,@(last args) ,@(butlast args))
                 (funcall #'send-command ,name T ,@args)) 
               (defun (setf ,sync-n) (,@(last args) ,@(butlast args))
-                (funcall #'send-command ,name NIL ,@args)))
+                (funcall #'send-command ,name NIL ,@args))
+              (export ',sync-n :cl-neovim)
+              (export ',n :cl-neovim))
       `(progn (defun ,n ,args
                 (funcall #'send-command ,name NIL ,@args))
               (defun ,async-n ,args
                 (funcall #'send-command ,name T ,@args))
-              (export ',async-n :cl-neovim)    
+              (export ',async-n :cl-neovim)
               (export ',n :cl-neovim)))))
 
 ;;;; Rest of file generated with `generate-api.lisp'.
