@@ -1,33 +1,50 @@
-About
------
-This is a [Neovim](http://neovim.io/) client library, which could eventually be used to write neovim plugins with Common Lisp.
+## About
+This is a [Neovim](http://neovim.io/) client library, which can be used to write neovim plugins using Common Lisp.
 
 A lot of people already implemented libraries for writing neovim plugins in [various different languages](https://github.com/neovim/neovim/wiki/Related-projects#api-clients), but as far as I know this is the first attempt at adding support for Common Lisp.
 
-Installation
------------
-Right now the simplest way to install the package is to use [quicklisp](https://www.quicklisp.org/). First clone this repository into your `quicklisp/local-projects` folder:
+## Installing package
+The simplest way to install the package is to use [quicklisp](https://www.quicklisp.org/). You need to clone 4 repositories into your `~/quicklisp/local-projects` folder:
+ - cl-neovim: `$ git clone https://github.com/adolenc/cl-neovim`;
+ - cl-messagepack: `$ git clone https://github.com/adolenc/cl-messagepack`;
+ - cl-async: `$ git clone https://github.com/orthecreedence/cl-async` and
+ - cl-libuv: `$ git clone https://github.com/orthecreedence/cl-libuv`.
 
-    cd ~/quicklisp/local-projects/ && git clone https://github.com/adolenc/cl-neovim
+You will also need `sbcl` and `libuv1-dev` which you should be able to install with your package manager.
 
-After this, run neovim and make it listen to the right address:
+#### a) Using host for writing plugins
+The easiest way to install and test host is to use `plug`. Add
 
-    NVIM_LISTEN_ADDRESS=127.0.0.1:7777 nvim
+    Plug 'cl-neovim'
 
-The only package `cl-neovim` depends on and is not up-to-date in quicklisp's repository is [cl-messagepack](https://github.com/mbrezu/cl-messagepack), so clone that into `local-projects` as well. After that, run the repl and evaluate:
+into your .nvimrc and symlink `cl-neovim` directory to `~/.nvim/plugged/`:
 
-    (ql:quickload 'cl-neovim)
-    (nvim:connect :host "127.0.0.1" :port 7777)
-    (nvim:command "echo 'Hello from common lisp!'")
+    $ ln -s ~/quicklisp/local-projects/cl-neovim ~/.nvim/plugged/cl-neovim
 
-which should display "Hello from common lisp!" into your neovim's prompt.
+This installs the host and a [sample plugin](https://github.com/adolenc/cl-neovim/blob/master/rplugin/lisp/sample-plugin.lisp), which you can test by running neovim, running `:UpdateRemotePlugins` and restarting neovim. After this, running `:Cmd`, `:call Func()` or entering a lisp buffer should trigger the first line to be rewritten (but only first 5 times).
 
+In case you would like to install the host manually, you need to copy `autoload/` and `plugin/` folders into `~/.nvim/` folder:
 
-I'm using SBCL in debian testing for development so it definitely works here. If you manage to make it run in some other implementation, be sure to let me know!
+    $ cp -r autoload plugin ~/.nvim/
 
-API
----
-Package basically exports every function exposed by neovim's api. You can find the full listing in [interface.lisp](https://github.com/adolenc/cl-neovim/blob/master/interface.lisp#L39-L155) (first string argument is the name).
+#### b) Using the package
+To use the package, run neovim and make it listen to the right address:
+
+    $ NVIM_LISTEN_ADDRESS=127.0.0.1:7777 nvim
+
+Start your sbcl REPL and enter:
+
+    * (ql:quickload 'cl-neovim)
+    * (nvim:connect :host "127.0.0.1" :port 7777)
+    * (nvim:command "echo 'Hello from Common Lisp!'")
+
+which should display "Hello from Common Lisp!" into your neovim's prompt. Alternatively you can start `nvim` without specifying `NVIM_LISTEN_ADDRESS`, and connect to it via the named pipe it creates (you can find the address by using `:echo $NVIM_LISTEN_ADDRESS` from inside neovim:
+
+    * (nvim:connect :filename "[path to named pipe]")
+
+## API
+#### Exported API
+Package basically exports every function exposed by neovim's api. You can find the full listing in [interface.lisp](https://github.com/adolenc/cl-neovim/blob/master/src/interface.lisp#L50-L166) (first string argument is the name).
 
 Some things are renamed for nicer interface though. Specifically:
 - underscores are replaced with hyphens;
@@ -38,15 +55,33 @@ For instance, `vim_get_current_line` is now just `current-line` and `buffer_get_
 
 Setter functions (those with `set` in their names) are implemented as inversions of their respective `get` counterparts via `setf` macro. So, to set current line to "some new line", you would use `(setf (nvim:current-line) "some new line")`.
 
-Contributions
--------------
+By default, regular (non-setter) functions are synchronous, meaning they block the execution of the thread until neovim returns the result. You can optionally use asynchronous versions by appending `-a` to the name, and these functions don't block the thread but instead return a promise. If you later on want to use the result, you can use `(nvim:finalize [promise])` to block the thread until result is available. So, for instance, `(nvim:finalize (nvim:current-line-a))` === `(nvim:current-line)`.
+
+Setter functions on the other hand are by default asynchronous, but you can similarly force them to be synchronous by appending `-s` to the name of function call. So, `(setf (nvim:current-line-s) "Wait for me")` blocks the thread until the current line is actually changed.
+
+#### Callbacks
+Callbacks for neovim are of the form:
+````
+callback-type name {sync-specifier}* args {options}? form*
+
+callback-type  ::= defcmd | defautocmd | defunc
+sync-specifier ::= :async | :sync
+options        ::= (opts [plist])
+````
+`callback-type` specifies the type of callback registered with neovim: `defcmd` for commands, `defautocmd` for autocommands and `defunc` for functions.
+
+`name` can be a string, in which case it is registered with neovim verbatim, or a symbol, in which case the `hyphen-separated-name` is registered with neovim as `CamelCaseName`.
+
+`sync-specifier` specifies if neovim gets blocked during the call (and expects a result) - `:sync`, or if the result can be discarded, meaning it can run asynchroniously - `:async`. If omitted, `:async` is used.
+
+`options` is used to specify additional options (eg. nargs, range, eval, pattern, ...) for the callback function.
+
+You can find example of a simple plugin (a translation of python example from [:h remote-plugin-example](http://neovim.io/doc/user/remote_plugin.html#remote-plugin-example)) in [rplugin/sample-plugin.lisp](https://github.com/adolenc/cl-neovim/blob/master/rplugin/lisp/sample-plugin.lisp).
+
+## Contributions
 would be awesome. As a relative newcomer to Common Lisp I would be really happy to merge pull requests or just hear your criticism.
 
-TODO
-----
-- add support for stdio;
-- figure out how to actually register with neovim as a host;
-- seamlessly convert between vim names and lisp names;
-- async versions of exported api commands;
-- example of a plugin;
-- ...
+## TODO
+ - cl-msgpack-rpc should not care about how the parameters it receives from requests/notifications are passed. Instead, it should just pass everything forward and it should be cl-neovim which takes care of properly calling functions;
+ - add more debugging functionality for plugin writers;
+ - add a makefile to simplify installation procedure (and also generate interface on the fly by using [src/generate-api.lisp](https://github.com/adolenc/cl-neovim/blob/master/src/generate-api.lisp) instead of having it manually written in the [src/interface.lisp](https://github.com/adolenc/cl-neovim/blob/master/src/interface.lisp).
