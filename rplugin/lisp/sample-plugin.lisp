@@ -15,7 +15,7 @@
   (setf (nvim:current-line)
         (format nil "Autocmd: Called ~A times, file: ~A" *calls* filename))) 
 
-(nvim:defn func (&rest args)
+(nvim:defunc func (&rest args)
   (increment-calls)
   (setf (nvim:current-line)
         (format nil "Function: Called ~A times, args: ~A" *calls* args)))

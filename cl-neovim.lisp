@@ -64,7 +64,7 @@
 (defmacro defautocmd (name &rest args)
   (construct-callback "autocmd" name args))
 
-(defmacro defn (name &rest args)
+(defmacro defunc (name &rest args)
   (construct-callback "function" name args))
 
 (defun send-command (command async &rest args)

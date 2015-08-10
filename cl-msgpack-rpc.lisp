@@ -47,7 +47,7 @@
   (declare (ignore socket))
   "Handle a new message based on its type and contents."
   (let* ((mpk:*decoder-prefers-lists* T)
-         (mpk::*bin-as-string* T)
+         (mpk:*decode-bin-as-string* T)
          (msg (mpk:decode data)))
     (with-open-file (s "/tmp/s.log" :direction :output :if-exists :append :if-does-not-exist :create)
       (format s "> ~A~%" msg))

@@ -21,11 +21,9 @@
   (:nicknames #:nvim)
   (:use #:cl
         #:mrpc
-        #:babel
         #:split-sequence)
   (:export #:connect
-           #:defcallback
            #:defcmd
            #:defautocmd
-           #:defn
+           #:defunc
            #:finish))
