@@ -5,7 +5,7 @@
   :author "Andrej Dolenc andrej.dolenc@student.uni-lj.si"
   :depends-on (#:babel #:split-sequence #:cl-msgpack-rpc)
   :serial t
-  :components ((:file "package")
-               (:file "cl-neovim")
-               (:file "interface")))
+  :components ((:file "src/package")
+               (:file "src/cl-neovim")
+               (:file "src/interface")))
 

@@ -5,6 +5,6 @@
   :author "Andrej Dolenc andrej.dolenc@student.uni-lj.si"
   :depends-on (#:cl-messagepack #:cl-async)
   :serial t
-  :components ((:file "package")
-               (:file "cl-msgpack-rpc")))
+  :components ((:file "src/package")
+               (:file "src/cl-msgpack-rpc")))
 
