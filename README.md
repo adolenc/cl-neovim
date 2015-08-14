@@ -6,7 +6,7 @@ A lot of people already implemented libraries for writing neovim plugins in [var
 ## Installing package
 The simplest way to install the package is to use [quicklisp](https://www.quicklisp.org/). You need to clone 4 repositories into your `~/quicklisp/local-projects` folder:
  - cl-neovim: `$ git clone https://github.com/adolenc/cl-neovim`;
- - cl-messagepack: `$ git clone https://github.com/adolenc/cl-messagepack`;
+ - cl-messagepack: `$ git clone https://github.com/mbrezu/cl-messagepack`;
  - cl-async: `$ git clone https://github.com/orthecreedence/cl-async` and
  - cl-libuv: `$ git clone https://github.com/orthecreedence/cl-libuv`.
 
@@ -21,11 +21,11 @@ into your .nvimrc and symlink `cl-neovim` directory to `~/.nvim/plugged/`:
 
     $ ln -s ~/quicklisp/local-projects/cl-neovim ~/.nvim/plugged/cl-neovim
 
-This installs the host and a [sample plugin](https://github.com/adolenc/cl-neovim/blob/master/rplugin/lisp/sample-plugin.lisp), which you can test by running neovim, running `:UpdateRemotePlugins` and restarting neovim. After this, running `:Cmd`, `:call Func()` or entering a lisp buffer should trigger the first line to be rewritten (but only first 5 times).
+This installs the host and a [sample plugin](https://github.com/adolenc/cl-neovim/blob/master/rplugin/lisp/sample-plugin.lisp), which you can test by running `$ nvim -c UpdateRemotePlugins` and restarting neovim. After this, executing `:Cmd`, `:call Func()` or entering a lisp buffer should trigger the current line to be rewritten (but only the first 5 times).
 
 In case you would like to install the host manually, you need to copy `autoload/` and `plugin/` folders into `~/.nvim/` folder:
 
-    $ cp -r autoload plugin ~/.nvim/
+    $ cp -r ~/quicklisp/local-projects/cl-neovim/autoload ~/quicklis/local-projects/cl-neovim/plugin ~/.nvim/
 
 #### b) Using the package
 To use the package, run neovim and make it listen to the right address:
@@ -76,12 +76,13 @@ options        ::= (opts [plist])
 
 `options` is used to specify additional options (eg. nargs, range, eval, pattern, ...) for the callback function.
 
-You can find example of a simple plugin (a translation of python example from [:h remote-plugin-example](http://neovim.io/doc/user/remote_plugin.html#remote-plugin-example)) in [rplugin/sample-plugin.lisp](https://github.com/adolenc/cl-neovim/blob/master/rplugin/lisp/sample-plugin.lisp).
+You can find example of a simple plugin (a translation of python example from [:h remote-plugin-example](http://neovim.io/doc/user/remote_plugin.html#remote-plugin-example)) in [rplugin/lisp/sample-plugin.lisp](https://github.com/adolenc/cl-neovim/blob/master/rplugin/lisp/sample-plugin.lisp).
 
 ## Contributions
 would be awesome. As a relative newcomer to Common Lisp I would be really happy to merge pull requests or just hear your criticism.
 
 ## TODO
  - cl-msgpack-rpc should not care about how the parameters it receives from requests/notifications are passed. Instead, it should just pass everything forward and it should be cl-neovim which takes care of properly calling functions;
+ - cl-msgpack-rpc should not block when it receives a new message;
  - add more debugging functionality for plugin writers;
  - add a makefile to simplify installation procedure (and also generate interface on the fly by using [src/generate-api.lisp](https://github.com/adolenc/cl-neovim/blob/master/src/generate-api.lisp) instead of having it manually written in the [src/interface.lisp](https://github.com/adolenc/cl-neovim/blob/master/src/interface.lisp).
