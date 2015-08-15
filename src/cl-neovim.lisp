@@ -1,5 +1,7 @@
 (in-package #:cl-neovim)
 
+(defparameter *debug* NIL)
+
 (defparameter *specs* NIL "A list of all the specs nvim needs.")
 (defparameter *path* NIL "A list of all the specs nvim needs.")
 (defparameter *nvim-types* (mrpc:define-extension-types
@@ -7,6 +9,11 @@
                                Buffer
                                Window
                                Tabpage)))
+
+(defun dbg (str &rest args)
+  (if *debug*
+    (with-open-file (s *debug* :direction :output :if-exists :append :if-does-not-exist :create)
+      (apply #'format s str args))))
 
 (defun plist->hash (plist)
   "Convert property list plist into hash table. Keys are transformed into

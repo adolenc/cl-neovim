@@ -83,6 +83,6 @@ would be awesome. As a relative newcomer to Common Lisp I would be really happy 
 
 ## TODO
  - cl-msgpack-rpc should not care about how the parameters it receives from requests/notifications are passed. Instead, it should just pass everything forward and it should be cl-neovim which takes care of properly calling functions;
- - cl-msgpack-rpc should not block when it receives a new message;
+ - cl-msgpack-rpc should probably use green threads instead of spawning new real thread for each new request/notification received;
  - add more debugging functionality for plugin writers;
  - add a makefile to simplify installation procedure (and also generate interface on the fly by using [src/generate-api.lisp](https://github.com/adolenc/cl-neovim/blob/master/src/generate-api.lisp) instead of having it manually written in the [src/interface.lisp](https://github.com/adolenc/cl-neovim/blob/master/src/interface.lisp)).
