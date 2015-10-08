@@ -79,7 +79,7 @@
   (nvim::dbg "THR: ~A~%" (bt:all-threads))
   (nvim::dbg "SENDING VIA [~A] ~A ::  ~A~%" *connection-type* *socket* *standard-output*)
   (nvim::dbg "> ~A~%" bytes)
-  (if (eq *connection-type* :io)
+  (if (eq *connection-type* :stdio)
     (loop for b across bytes do (write-byte b *socket*) finally (force-output))
     (if *socket*
       (if cl-async-base:*event-base*
@@ -131,7 +131,7 @@
 
 (defun finish (promise)
   "Block the thread until a promise is resolved."
-  (loop until (car promise) finally (return (cdr promise))))
+  (loop until (car promise) do (sleep 0.01) finally (return (cdr promise))))
 
 (defun fulfill (promise result)
   "Fill the result into promise and toggle its resolved switch."
@@ -185,5 +185,5 @@
                     :name "Event loop"
                     :initial-bindings `((mpk:*extended-types* . ',*extended-types*)))
     (with-open-file (*error-output* "/tmp/err.log" :direction :output :if-exists :append :if-does-not-exist :create)
-      (setf *connection-type* :io)
+      (setf *connection-type* :stdio)
       (run-io-listener))))
