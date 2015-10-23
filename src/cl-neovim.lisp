@@ -27,58 +27,84 @@
   "Convert lisp symbol into vim name. Basically turns hyphen-separated name
    into camelcase string."
   (let* ((str (symbol-name lisp-name))
-         (parts (split-sequence #\- str)))
+         (parts (split-sequence:split-sequence #\- str)))
     (format nil "~{~:(~A~)~^~}" parts)))
 
-(defun parse-body (body)
-  (if (and (listp (car body)) (equal (symbol-name (caar body)) (symbol-name 'opts)))
-    (values (cadar body) (rest body))
-    (values NIL body)))
+(defun symbol-name= (symbol1 symbol2)
+  "Compare two symbols by their name."
+  (and (symbolp symbol1) (symbolp symbol2)
+       (string= (symbol-name symbol1) (symbol-name symbol2))))
 
-(defun define-callback (type name args sync opts body)
-  (let ((name (if (stringp name) name (lisp->vim-name name)))
-        (opts (if (and (string= type "autocmd") (not (getf opts :pattern)))
-                (append '(:pattern "*") opts)
-                opts)))
-    `(progn (push (plist->hash (list :sync ,(if sync 1 0)
-                                     :name ,name
-                                     :type ,type
-                                     :opts (plist->hash ',opts)))
-                  *specs*)
-            (,(if sync 'mrpc:register-request-callback 'mrpc:register-notification-callback)
-              ,(if *path*
-                 (concatenate 'string
-                              (format nil "~A:~A:~A" *path* type name)
-                              (if (string= type "autocmd") (format nil ":~A" (getf opts :pattern)) ""))
-                 name)
-              #'(lambda ,args ,@body)))))
+(defun mklst (obj) (if (listp obj) obj (list obj)))
 
-(defun construct-callback (type name args)
-  (cond ((or (listp (first args)))
-         (multiple-value-bind (opts body) (parse-body (rest args))
-           (define-callback type name (first args) NIL opts body)))
-         ((eq (first args) :sync)
-          (multiple-value-bind (opts body) (parse-body (nthcdr 2 args))
-            (define-callback type name (second args) T opts body)))
-         ((eq (first args) :async)
-          (multiple-value-bind (opts body) (parse-body (nthcdr 2 args))
-            (define-callback type name (second args) NIL opts body)))))
+(defun alist-stable-intersection (as bs)
+  "Intersection between 2 association lists as and bs, where the order is the
+   same as in as and the values are associations from as."
+  (let ((bs-alist (make-alist bs)))
+    (remove-if-not #'(lambda (a) (assoc (car (mklst a)) bs-alist :test #'symbol-name=)) as)))
 
+(defun make-alist (lst)
+  "Wrap a list of symbols (or lists) to a list of lists with first element
+   being symbol."
+  (mapcar #'mklst lst))
 
-(defmacro defcmd (name &rest args)
-  (construct-callback "command" name args))
+(defun short-names (args)
+  "Return short names for &opts arguments"
+  (mapcar #'(lambda (arg) (or (second arg) (first arg)))
+          (make-alist args)))
 
-(defmacro defautocmd (name &rest args)
-  (construct-callback "autocmd" name args))
+(defun construct-arglist-opts (user-arg-opts user-declare-opts nvim-opts)
+  (let* ((user-arg-opts (mapcar #'mklst user-arg-opts))
+         (ordered-opts (alist-stable-intersection (make-alist nvim-opts) user-declare-opts))
+         (ignored-opts (mapcar #'(lambda (arg) (or (assoc arg user-arg-opts :test #'symbol-name=) (gensym))) (mapcar #'car ordered-opts)))
+         (short-arg-names (short-names ignored-opts)))
+    short-arg-names))
 
-(defmacro defunc (name &rest args)
-  (construct-callback "function" name args))
+(defun construct-callback (type nvim-opts name-args-decls-body)
+  (destructuring-bind (fun name qualifiers args-and-opts docstring decls body) (form-fiddle:split-lambda-form (cons 'defun name-args-decls-body))
+    (declare (ignore fun))
+    (destructuring-bind (&optional args arglist-opts) (split-sequence:split-sequence '&opts args-and-opts :test #'symbol-name=)
+      (let* ((name (if (stringp name) name (lisp->vim-name name)))
+             (sync (member :sync qualifiers))
+             (declare-opts (rest (assoc 'opts (cdar decls) :test #'symbol-name=)))
+             (arglist-opts (construct-arglist-opts arglist-opts declare-opts nvim-opts))
+             (opts (mapcar #'(lambda (l) (list (intern (symbol-name (first l)) 'keyword) (rest l))) declare-opts))
+             (opts (alexandria:flatten (alexandria:alist-plist opts)))
+             (opts (if (and (string= type "autocmd") (not (getf opts :pattern)))
+                     (append '(:pattern "*") opts)
+                     opts))
+             (callback-name (if *path*
+                              (concatenate 'string
+                                           (format nil "~A:~A:~A" *path* type name)
+                                           (if (string= type "autocmd") (format nil ":~A" (getf opts :pattern)) ""))
+                              name))
+             (a (gensym)))
+        `(progn
+           (push (plist->hash (list :sync ,(if sync 1 0)
+                                    :name ,name
+                                    :type ,type
+                                    :opts (plist->hash ',opts)))
+                 *specs*)
+           (,(if sync 'mrpc:register-request-callback 'mrpc:register-notification-callback)
+             ,callback-name
+             #'(lambda (,a ,@arglist-opts)
+                 ,docstring
+                 (destructuring-bind ,args (mklst ,a)
+                   ,@body))))))))
+
+(defmacro defcmd (&rest name-args-decls-body)
+  (construct-callback "command" '(range count bang register) name-args-decls-body))
+
+(defmacro defautocmd (&rest name-args-decls-body)
+  (construct-callback "autocmd" '() name-args-decls-body))
+
+(defmacro defunc (&rest name-args-decls-body)
+  (construct-callback "function" '() name-args-decls-body))
 
 (defun send-command (command async &rest args)
   "Send nvim command to neovim socket and return the result."
   (let ((mrpc:*extended-types* *nvim-types*))
     (mrpc:request command args async)))
-
 
 (defun connect (&rest args &key host port filename)
   (let ((mrpc:*extended-types* *nvim-types*))

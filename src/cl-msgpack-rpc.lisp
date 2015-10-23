@@ -59,8 +59,7 @@
              (bt:make-thread
                #'(lambda () (nvim::dbg "~A :: ~A~%" *socket* *standard-output*)
                              (handler-case (send-response msg-id NIL
-                                          (let ((params (if (listp (first msg-params)) (first msg-params) msg-params)))
-                                            (apply (gethash msg-method *request-callbacks*) params)))
+                                                          (apply (gethash msg-method *request-callbacks*) msg-params))
                (error (desc) (send-response msg-id (format nil "~A" desc) NIL)))))))
           ((responsep msg)
            (with-response msg
@@ -70,8 +69,7 @@
           ((notificationp msg)
            (with-notification msg
              (bt:make-thread #'(lambda ()
-               (handler-case (let ((params (if (listp (first msg-params)) (first msg-params) msg-params)))
-                               (apply (gethash msg-method *notification-callbacks*) params))
+               (handler-case (apply (gethash msg-method *notification-callbacks*) msg-params)
                  (error (desc) (warn (format nil "Unhandled notification ~A(~{~A~^, ~}):~%~A~%" msg-method msg-params desc)))))))))))
 
 (defun send (bytes)

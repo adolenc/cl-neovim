@@ -1,5 +1,4 @@
 ;;;; package.lisp
-
 (defpackage #:cl-msgpack-rpc
   (:nicknames #:mrpc)
   (:use #:cl
@@ -21,6 +20,7 @@
   (:nicknames #:nvim)
   (:use #:cl
         #:mrpc
+        #:form-fiddle
         #:split-sequence)
   (:export #:connect
            #:defcmd
