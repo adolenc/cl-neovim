@@ -172,11 +172,11 @@
   (remhash name *notification-callbacks*))
 
 
-(defun run (&key host port filename)
+(defun connect (&key host port file)
   "Run listener in an event loop inside a background thread."
-  (if (or host port filename)
-    (bt:make-thread (lambda () (cond (filename        (setf *connection-type* :pipe)
-                                                      (run-listener #'as:pipe-connect filename))
+  (if (or host port file)
+    (bt:make-thread (lambda () (cond (file            (setf *connection-type* :pipe)
+                                                      (run-listener #'as:pipe-connect file))
                                      ((and host port) (setf *connection-type* :tcp)
                                                       (run-listener #'as:tcp-connect host port))
                                      (t (error "You must specify both host and port."))))

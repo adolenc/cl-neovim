@@ -1,5 +1,3 @@
-;;;; cl-neovim.asd
-
 (asdf:defsystem #:cl-neovim
   :description "Common lisp client for neovim"
   :author "Andrej Dolenc andrej.dolenc@student.uni-lj.si"

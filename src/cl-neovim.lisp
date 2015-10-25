@@ -1,6 +1,6 @@
 (in-package #:cl-neovim)
 
-(defparameter *debug* NIL)
+(defparameter *debug* "/tmp/s.log")
 
 (defparameter *specs* NIL "A list of all the specs nvim needs.")
 (defparameter *path* NIL "A list of all the specs nvim needs.")
@@ -10,12 +10,12 @@
                                Window
                                Tabpage)))
 
-(defun dbg (str &rest args)
+(cl:defun dbg (str &rest args)
   (if *debug*
     (with-open-file (s *debug* :direction :output :if-exists :append :if-does-not-exist :create)
       (apply #'format s str args))))
 
-(defun plist->hash (plist)
+(cl:defun plist->hash (plist)
   "Convert property list plist into hash table. Keys are transformed into
    lowercase strings."
   (let ((hash (make-hash-table :test #'equal)))
@@ -23,44 +23,44 @@
           do (setf (gethash (map 'string #'char-downcase (symbol-name k)) hash) v)
           finally (return hash))))
 
-(defun lisp->vim-name (lisp-name)
+(cl:defun lisp->vim-name (lisp-name)
   "Convert lisp symbol into vim name. Basically turns hyphen-separated name
    into camelcase string."
   (let* ((str (symbol-name lisp-name))
          (parts (split-sequence:split-sequence #\- str)))
     (format nil "~{~:(~A~)~^~}" parts)))
 
-(defun symbol-name= (symbol1 symbol2)
+(cl:defun symbol-name= (symbol1 symbol2)
   "Compare two symbols by their name."
   (and (symbolp symbol1) (symbolp symbol2)
        (string= (symbol-name symbol1) (symbol-name symbol2))))
 
-(defun mklst (obj) (if (listp obj) obj (list obj)))
+(cl:defun mklst (obj) (if (listp obj) obj (list obj)))
 
-(defun alist-stable-intersection (as bs)
+(cl:defun alist-stable-intersection (as bs)
   "Intersection between 2 association lists as and bs, where the order is the
    same as in as and the values are associations from as."
   (let ((bs-alist (make-alist bs)))
     (remove-if-not #'(lambda (a) (assoc (car (mklst a)) bs-alist :test #'symbol-name=)) as)))
 
-(defun make-alist (lst)
+(cl:defun make-alist (lst)
   "Wrap a list of symbols (or lists) to a list of lists with first element
    being symbol."
   (mapcar #'mklst lst))
 
-(defun short-names (args)
+(cl:defun short-names (args)
   "Return short names for &opts arguments"
   (mapcar #'(lambda (arg) (or (second arg) (first arg)))
           (make-alist args)))
 
-(defun construct-arglist-opts (user-arg-opts user-declare-opts nvim-opts)
+(cl:defun construct-arglist-opts (user-arg-opts user-declare-opts nvim-opts)
   (let* ((user-arg-opts (mapcar #'mklst user-arg-opts))
          (ordered-opts (alist-stable-intersection (make-alist nvim-opts) user-declare-opts))
          (ignored-opts (mapcar #'(lambda (arg) (or (assoc arg user-arg-opts :test #'symbol-name=) (gensym))) (mapcar #'car ordered-opts)))
          (short-arg-names (short-names ignored-opts)))
     short-arg-names))
 
-(defun construct-callback (type nvim-opts name-args-decls-body)
+(cl:defun construct-callback (type nvim-opts name-args-decls-body)
   (destructuring-bind (fun name qualifiers args-and-opts docstring decls body) (form-fiddle:split-lambda-form (cons 'defun name-args-decls-body))
     (declare (ignore fun))
     (destructuring-bind (&optional args arglist-opts) (split-sequence:split-sequence '&opts args-and-opts :test #'symbol-name=)
@@ -92,20 +92,20 @@
                  (destructuring-bind ,args (mklst ,a)
                    ,@body))))))))
 
-(defmacro defcmd (&rest name-args-decls-body)
+(defmacro defcommand (&rest name-args-decls-body)
   (construct-callback "command" '(range count bang register) name-args-decls-body))
 
 (defmacro defautocmd (&rest name-args-decls-body)
   (construct-callback "autocmd" '() name-args-decls-body))
 
-(defmacro defunc (&rest name-args-decls-body)
+(defmacro defun (&rest name-args-decls-body)
   (construct-callback "function" '() name-args-decls-body))
 
-(defun send-command (command async &rest args)
+(cl:defun send-command (command async &rest args)
   "Send nvim command to neovim socket and return the result."
   (let ((mrpc:*extended-types* *nvim-types*))
     (mrpc:request command args async)))
 
-(defun connect (&rest args &key host port filename)
+(cl:defun connect (&rest args &key host port file)
   (let ((mrpc:*extended-types* *nvim-types*))
-    (apply #'mrpc:run args)))
+    (apply #'mrpc:connect args)))

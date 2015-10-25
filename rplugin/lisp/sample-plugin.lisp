@@ -1,10 +1,12 @@
 (defpackage #:sample-plugin
-  (:use #:cl #:cl-neovim))
+  (:use #:cl #:cl-neovim)
+  (:shadowing-import-from #:cl #:defun))
 (in-package #:sample-plugin)
+
 
 (defparameter *calls* 0 "Counter for calls.")
 
-(nvim:defcmd cmd :sync (&rest args &opts (range r))
+(nvim:defcommand cmd :sync (&rest args &opts (range r))
   (declare (opts (range "%") (nargs "*") (complete "file")))
   (increment-calls)
   (setf (nvim:current-line) (format nil "Command: Called ~A times, args: ~A, range: ~A" *calls* args r)))
@@ -14,7 +16,7 @@
   (increment-calls)
   (setf (nvim:current-line) (format nil "Autocmd: Called ~A times, file: ~A" *calls* filename))) 
 
-(nvim:defunc func (&rest args)
+(nvim:defun func (&rest args)
   (increment-calls)
   (setf (nvim:current-line) (format nil "Function: Called ~A times, args: ~A" *calls* args)))
 

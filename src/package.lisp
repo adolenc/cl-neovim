@@ -1,4 +1,5 @@
-;;;; package.lisp
+(in-package :cl-user)
+
 (defpackage #:cl-msgpack-rpc
   (:nicknames #:mrpc)
   (:use #:cl
@@ -11,7 +12,7 @@
            #:register-notification-callback
            #:remove-request-callback
            #:remove-notification-callback
-           #:run 
+           #:connect
            #:request
            #:notify
            #:finish))
@@ -22,8 +23,10 @@
         #:mrpc
         #:form-fiddle
         #:split-sequence)
+  (:shadow #:defun
+           #:connect)
   (:export #:connect
-           #:defcmd
+           #:defcommand
            #:defautocmd
-           #:defunc
+           #:defun
            #:finish))

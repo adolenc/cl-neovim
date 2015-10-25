@@ -5,23 +5,23 @@
 
 (defparameter *dangerous-names* '("vim_eval"))
 
-(defun string->symbol (str) "Convert string into symbol." (intern (substitute #\- #\_ (format nil "~:@(~A~)" str)))) 
+(cl:defun string->symbol (str) "Convert string into symbol." (intern (substitute #\- #\_ (format nil "~:@(~A~)" str)))) 
 
-(defun parse-args (args)
+(cl:defun parse-args (args)
   "Extract names from nvim api's metadata of arguments into a list of symbols."
   (cond ((listp args) (mapcar #'(lambda (arg) (string->symbol (second arg))) args))
         ((stringp args) (list (string->symbol args)))
         (t NIL)))
 
-(defun setterp (name) "Is name a setter?" (search "set_" name))
+(cl:defun setterp (name) "Is name a setter?" (search "set_" name))
 
-(defun clean-up-name (name &optional (modifiers '("vim" "get" "set")))
+(cl:defun clean-up-name (name &optional (modifiers '("vim" "get" "set")))
   "Removes all substrings specified in modifiers from name."
   (let* ((components (split-sequence #\_ name))
          (main-components (remove-if #'(lambda (c) (member c modifiers :test #'string=)) components)))
     (format nil "~{~A~^_~}" main-components)))
 
-(defun symbol-append (&rest symbols) 
+(cl:defun symbol-append (&rest symbols) 
   "Concatenate symbol names and return resulting symbol."
   (intern (apply #'concatenate 'string (mapcar #'symbol-name symbols))))
 
@@ -35,15 +35,15 @@
          (async-n (symbol-append n '-a))
          (sync-n (symbol-append n '-s)))
     (if (setterp name)
-      `(progn (defun (setf ,n) (,@(last args) ,@(butlast args))
+      `(progn (cl:defun (setf ,n) (,@(last args) ,@(butlast args))
                 (funcall #'send-command ,name T ,@args)) 
-              (defun (setf ,sync-n) (,@(last args) ,@(butlast args))
+              (cl:defun (setf ,sync-n) (,@(last args) ,@(butlast args))
                 (funcall #'send-command ,name NIL ,@args))
               (export ',sync-n :cl-neovim)
               (export ',n :cl-neovim))
-      `(progn (defun ,n ,args
+      `(progn (cl:defun ,n ,args
                 (funcall #'send-command ,name NIL ,@args))
-              (defun ,async-n ,args
+              (cl:defun ,async-n ,args
                 (funcall #'send-command ,name T ,@args))
               (export ',async-n :cl-neovim)
               (export ',n :cl-neovim)))))
