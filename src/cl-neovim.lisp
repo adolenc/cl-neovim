@@ -151,7 +151,9 @@
 (cl:defun send-command (command async &rest args)
   "Send nvim command to neovim socket and return the result."
   (let ((mrpc:*extended-types* *nvim-types*))
-    (mrpc:request command args async)))
+    (if async
+      (mrpc:notify command args)
+      (mrpc:request command args NIL))))
 
 (cl:defun connect (&rest args &key host port file)
   (let ((mrpc:*extended-types* *nvim-types*))

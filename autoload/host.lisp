@@ -2,7 +2,7 @@
 (ql:quickload :cl-neovim :silent t)
 
 
-(defparameter *err* NIL)
+(defparameter *err-stream* NIL)
 
 (defun load-plugin (path)
   (with-output-to-string (*standard-output*)
@@ -11,7 +11,7 @@
 
 (nvim:defun "specs" :sync (path)
   (declare (opts ignore))
-  (with-open-file (*error-output* *err* :direction :output :if-does-not-exist :create :if-exists :append)
+  (with-open-file (*error-output* (or *err-stream* "/dev/null") :direction :output :if-does-not-exist :create :if-exists :append)
     (setf nvim::*specs* NIL)
     (load-plugin path))
   (make-array (length nvim::*specs*) :initial-contents nvim::*specs*))

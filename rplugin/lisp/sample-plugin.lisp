@@ -16,10 +16,10 @@
   (increment-calls)
   (setf (nvim:current-line) (format nil "Autocmd: Called ~A times, file: ~A" *calls* filename))) 
 
-(nvim:defun func :sync (a b &rest args &opts vim-eval)
+(nvim:defun func (&rest args &opts vim-eval)
   (declare (opts (vim-eval "3+3")))
   (increment-calls)
-  (setf (nvim:current-line) (format nil "Function: Called ~A times, args: ~A, eval: ~A" *calls* (cons a args) vim-eval)))
+  (setf (nvim:current-line) (format nil "Function: Called ~A times, args: ~A, eval: ~A" *calls* args vim-eval)))
 
 (defun increment-calls ()
   (if (= *calls* 5)

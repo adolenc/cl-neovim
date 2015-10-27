@@ -149,7 +149,8 @@
 
 (defun notify (fn &optional params)
   "Send a notification for function fn with params."
-  (send-notification fn (or params #())))
+  (send-notification fn (or params #()))
+  NIL)
 
 (defun register-request-callback (name fn)
   "Register a function which will get called when server sends

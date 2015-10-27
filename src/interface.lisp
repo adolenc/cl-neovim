@@ -21,7 +21,7 @@
          (main-components (remove-if #'(lambda (c) (member c modifiers :test #'string=)) components)))
     (format nil "~{~A~^_~}" main-components)))
 
-(cl:defun symbol-append (&rest symbols) 
+(cl:defun symbol-concat (&rest symbols) 
   "Concatenate symbol names and return resulting symbol."
   (intern (apply #'concatenate 'string (mapcar #'symbol-name symbols))))
 
@@ -32,14 +32,13 @@
   (declare (ignore ret can-fail deferred))
   (let* ((args (parse-args args))
          (n (string->symbol (if (member name *dangerous-names* :test #'string-equal) name (clean-up-name name))))
-         (async-n (symbol-append n '-a))
-         (sync-n (symbol-append n '-s)))
+         (async-n (symbol-concat n '/a)))
     (if (setterp name)
       `(progn (cl:defun (setf ,n) (,@(last args) ,@(butlast args))
-                (funcall #'send-command ,name T ,@args)) 
-              (cl:defun (setf ,sync-n) (,@(last args) ,@(butlast args))
-                (funcall #'send-command ,name NIL ,@args))
-              (export ',sync-n :cl-neovim)
+                (funcall #'send-command ,name NIL ,@args)) 
+              (cl:defun (setf ,async-n) (,@(last args) ,@(butlast args))
+                (funcall #'send-command ,name T ,@args))
+              (export ',async-n :cl-neovim)
               (export ',n :cl-neovim))
       `(progn (cl:defun ,n ,args
                 (funcall #'send-command ,name NIL ,@args))
