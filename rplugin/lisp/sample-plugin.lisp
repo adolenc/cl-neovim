@@ -1,24 +1,25 @@
-(ql:quickload 'cl-neovim)
+(defpackage #:sample-plugin
+  (:use #:cl #:cl-neovim)
+  (:shadowing-import-from #:cl #:defun))
+(in-package #:sample-plugin)
 
 
 (defparameter *calls* 0 "Counter for calls.")
 
-(nvim:defcmd cmd :sync (&rest args)
-  (opts (:range "" :nargs "*"))
+(nvim:defcommand lisp-sample-cmd :sync (&rest args &opts (range r) bang)
+  (declare (opts (range "%") (nargs "*") bang (complete "file")))
   (increment-calls)
-  (setf (nvim:current-line)
-        (format nil "Command: Called ~A times, args: ~A, range: ~A" *calls* args 2)))
+  (setf (nvim:current-line) (format nil "Command: Called ~A times, args: ~A, range: ~A, bang: ~A" *calls* args r bang)))
 
 (nvim:defautocmd buf-enter :sync (filename)
-  (opts (:pattern "*.lisp" :eval "expand(\"<afile>\")")) 
+  (declare (opts (pattern "*.lisp") (vim-eval "expand(\"<afile>\")")))
   (increment-calls)
-  (setf (nvim:current-line)
-        (format nil "Autocmd: Called ~A times, file: ~A" *calls* filename))) 
+  (setf (nvim:current-line) (format nil "Autocmd: Called ~A times, file: ~A" *calls* filename))) 
 
-(nvim:defunc func (&rest args)
+(nvim:defun "LispSampleFun" (&rest args &opts (vim-eval curr-line))
+  (declare (opts (vim-eval "line(\".\")-1")))
   (increment-calls)
-  (setf (nvim:current-line)
-        (format nil "Function: Called ~A times, args: ~A" *calls* args)))
+  (setf (nvim:current-line) (format nil "Function: Called ~A times, args: ~A, eval: ~A" *calls* args curr-line)))
 
 (defun increment-calls ()
   (if (= *calls* 5)

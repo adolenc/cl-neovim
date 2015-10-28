@@ -59,8 +59,7 @@
              (bt:make-thread
                #'(lambda () (nvim::dbg "~A :: ~A~%" *socket* *standard-output*)
                              (handler-case (send-response msg-id NIL
-                                          (let ((params (if (listp (first msg-params)) (first msg-params) msg-params)))
-                                            (apply (gethash msg-method *request-callbacks*) params)))
+                                                          (apply (gethash msg-method *request-callbacks*) msg-params))
                (error (desc) (send-response msg-id (format nil "~A" desc) NIL)))))))
           ((responsep msg)
            (with-response msg
@@ -70,8 +69,7 @@
           ((notificationp msg)
            (with-notification msg
              (bt:make-thread #'(lambda ()
-               (handler-case (let ((params (if (listp (first msg-params)) (first msg-params) msg-params)))
-                               (apply (gethash msg-method *notification-callbacks*) params))
+               (handler-case (apply (gethash msg-method *notification-callbacks*) msg-params)
                  (error (desc) (warn (format nil "Unhandled notification ~A(~{~A~^, ~}):~%~A~%" msg-method msg-params desc)))))))))))
 
 (defun send (bytes)
@@ -151,7 +149,8 @@
 
 (defun notify (fn &optional params)
   "Send a notification for function fn with params."
-  (send-notification fn (or params #())))
+  (send-notification fn (or params #()))
+  NIL)
 
 (defun register-request-callback (name fn)
   "Register a function which will get called when server sends
@@ -174,11 +173,11 @@
   (remhash name *notification-callbacks*))
 
 
-(defun run (&key host port filename)
+(defun connect (&key host port file)
   "Run listener in an event loop inside a background thread."
-  (if (or host port filename)
-    (bt:make-thread (lambda () (cond (filename        (setf *connection-type* :pipe)
-                                                      (run-listener #'as:pipe-connect filename))
+  (if (or host port file)
+    (bt:make-thread (lambda () (cond (file            (setf *connection-type* :pipe)
+                                                      (run-listener #'as:pipe-connect file))
                                      ((and host port) (setf *connection-type* :tcp)
                                                       (run-listener #'as:tcp-connect host port))
                                      (t (error "You must specify both host and port."))))
