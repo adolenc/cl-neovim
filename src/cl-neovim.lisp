@@ -114,6 +114,8 @@
     name))
 
 (cl:defun construct-callback (type nvim-opts name-args-decls-body)
+  "Construct the callback, register it with proper name, and generate specs
+   based on the arguments passed."
   (destructuring-bind (fun name qualifiers args-and-opts docstring decls body) (form-fiddle:split-lambda-form (cons 'defun name-args-decls-body))
     (declare (ignore fun))
     (destructuring-bind (&optional args arglist-opts) (split-sequence:split-sequence '&opts args-and-opts :test #'symbol-name=)
@@ -140,12 +142,15 @@
                    ,@body))))))))
 
 (defmacro defcommand (&rest name-args-decls-body)
+  ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
   (construct-callback "command" '(nargs range count bang register vim-eval) name-args-decls-body))
 
 (defmacro defautocmd (&rest name-args-decls-body)
+  ; nvim-options for autocmd found in runtime/autoload/remote/define.vim#L121-L128
   (construct-callback "autocmd" 'args name-args-decls-body))
 
 (defmacro defun (&rest name-args-decls-body)
+  ; nvim-options for function found in runtime/autoload/remote/define.vim#L158-L166
   (construct-callback "function" '(args vim-eval) name-args-decls-body))
 
 (cl:defun send-command (command async &rest args)

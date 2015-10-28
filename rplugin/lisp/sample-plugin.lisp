@@ -6,7 +6,7 @@
 
 (defparameter *calls* 0 "Counter for calls.")
 
-(nvim:defcommand cmd :sync (&rest args &opts (range r) bang)
+(nvim:defcommand lisp-sample-cmd :sync (&rest args &opts (range r) bang)
   (declare (opts (range "%") (nargs "*") bang (complete "file")))
   (increment-calls)
   (setf (nvim:current-line) (format nil "Command: Called ~A times, args: ~A, range: ~A, bang: ~A" *calls* args r bang)))
@@ -16,10 +16,10 @@
   (increment-calls)
   (setf (nvim:current-line) (format nil "Autocmd: Called ~A times, file: ~A" *calls* filename))) 
 
-(nvim:defun func (&rest args &opts vim-eval)
-  (declare (opts (vim-eval "3+3")))
+(nvim:defun "LispSampleFun" (&rest args &opts (vim-eval curr-line))
+  (declare (opts (vim-eval "line(\".\")-1")))
   (increment-calls)
-  (setf (nvim:current-line) (format nil "Function: Called ~A times, args: ~A, eval: ~A" *calls* args vim-eval)))
+  (setf (nvim:current-line) (format nil "Function: Called ~A times, args: ~A, eval: ~A" *calls* args curr-line)))
 
 (defun increment-calls ()
   (if (= *calls* 5)

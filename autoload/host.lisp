@@ -1,7 +1,6 @@
 (load "~/.sbclrc")
 (ql:quickload :cl-neovim :silent t)
 
-
 (defparameter *err-stream* NIL)
 
 (defun load-plugin (path)
