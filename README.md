@@ -4,7 +4,7 @@ This is a [Neovim](http://neovim.io/) client library, which can be used to write
 A lot of people already implemented libraries for writing neovim plugins in [various different languages](https://github.com/neovim/neovim/wiki/Related-projects#api-clients), but as far as I know this is the first attempt at adding support for Common Lisp.
 
 ## Installing package
-The simplest way to install the package is to use [quicklisp](https://www.quicklisp.org/). You need to manually clone 5 repositories into your `~/quicklisp/local-projects` folder:
+The simplest way to install the package is to use [quicklisp](https://www.quicklisp.org/). For now you will need to manually clone 5 repositories into your `~/quicklisp/local-projects` folder:
  - [cl-neovim](https://github.com/adolenc/cl-neovim): `$ git clone https://github.com/adolenc/cl-neovim`;
  - [cl-messagepack](https://github.com/mbrezu/cl-messagepack): `$ git clone https://github.com/mbrezu/cl-messagepack`;
  - [form-fiddle](https://github.com/Shinmera/form-fiddle): `$ git clone https://github.com/Shinmera/form-fiddle`;
@@ -45,7 +45,7 @@ which should display "Hello from Common Lisp!" into your neovim's prompt. Altern
 
 ## API
 #### Exported API
-Package basically exports every function exposed by neovim's api. You can find the full listing in [interface.lisp](https://github.com/adolenc/cl-neovim/blob/master/src/interface.lisp#L50-L166) (first string argument is the name).
+Package basically exports every function exposed by neovim's api. You can find the full listing in [interface.lisp](https://github.com/adolenc/cl-neovim/blob/master/src/interface.lisp#L51-L167) (first string argument is the name).
 
 Some things are renamed for nicer interface though. Specifically:
 - underscores are replaced with hyphens;
@@ -81,12 +81,13 @@ When `sync-specifier` is set to `:sync` neovim gets blocked during the call, oth
  - autocmds: none (values from `vim-eval` get passed as normal arguments into lambda-list); and
  - functions: `vim-eval`.
 
-While these are full option names, you can also specify alternative names for them by wrapping them into a list of `(option alternative-name)`. Note that in order to receive these options from neovim, you will have to specify their values in `declare-opts`.
+While these are full option names, you can also specify alternative names for them by wrapping them into a list of `(option alternative-name)`. Note that in order to receive these options from neovim, you will have to specify them in `declare-opts`.
 
-`declare-opts` is a declaration used to let neovim know about expected behaviour (and tell it which options you want it to pass along in the calls) of the callback. Valid options in `declare-opt` are for:
+`declare-opts` is a declaration used to let neovim know about expected behaviour of the callback and tell it which options you want it to pass along in the calls. Valid options in `declare-opt` are for:
  - commands: `nargs | complete | (range | count) | bang | register | vim-eval`;
  - autocmds: `pattern | vim-eval`; and
  - functions: `range | vim-eval`.
+
 <!--- copied directly from python host: neovim/plugin/decorators.py#L45-L134 -->
 
 Note that you can specify just the name of the option in which case default values are assumed, or an `(option value)` list if you want to assign custom values for options.
@@ -97,7 +98,7 @@ In case you want to write plugin or functions which you will manually call via `
 You can find example of a simple plugin (a translation of python example from [:h remote-plugin-example](http://neovim.io/doc/user/remote_plugin.html#remote-plugin-example)) in [rplugin/lisp/sample-plugin.lisp](https://github.com/adolenc/cl-neovim/blob/master/rplugin/lisp/sample-plugin.lisp).
 
 ## Contributions
-Are very welcome. As a relative newcomer to Common Lisp I would be really happy to merge pull requests or just hear your criticism.
+Are very welcome. As a relative newcomer to Common Lisp I would be really happy to merge pull requests or just hear your criticism/ideas to improve the library.
 
 ## Support
-At the moment I develop this library on Debian GNU/Linux OS and use SBCL and Quicklisp. It should not be too much work to make it work on other systems (I would assume the problems are mainly with the host architecture in `autoload/` directory) so if there is request I'd be more than willing to port it (or merge the port in).
+At the moment I develop this library on Debian GNU/Linux OS and use SBCL and Quicklisp. It should not be too much work to make it work on other systems (I would assume the problems are mainly with the host architecture located in [autoload/](https://github.com/adolenc/cl-neovim/blob/master/autoload/) directory) so if there is request I'd be more than willing to port it (or merge the port in).
