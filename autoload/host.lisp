@@ -1,26 +1,30 @@
 (load "~/.sbclrc")
 (ql:quickload :cl-neovim :silent t)
 
-(defparameter *err-stream* NIL)
+(defparameter *dbg-stream* NIL)
 
 (defun load-plugin (path)
-  (with-output-to-string (*standard-output*)
-    (setf nvim::*path* path)
-    (load path)))
+  (with-open-file (*standard-output* (or *dbg-stream* "/dev/null") :direction :output :if-does-not-exist :create :if-exists :append)
+    (let ((*error-output* *standard-output*))
+      (setf nvim::*path* path)
+      (load path))))
 
 (nvim:defun "specs" :sync (path)
   (declare (opts ignore))
-  (with-open-file (*error-output* (or *err-stream* "/dev/null") :direction :output :if-does-not-exist :create :if-exists :append)
-    (setf nvim::*specs* NIL)
-    (load-plugin path))
-  (make-array (length nvim::*specs*) :initial-contents nvim::*specs*))
+  (let ((nvim::*specs* '()))
+    (load-plugin path)
+    nvim::*specs*))
 
-(nvim:defun "poll" :sync ()
+(nvim:defun poll :sync ()
   (declare (opts ignore))
   "ok")
 
+(nvim:defun enable-debugging :sync (filename)
+  (declare (opts ignore))
+  (setf *dbg-stream* filename))
 
-(if (rest *posix-argv*)
-  (mapcar #'load-plugin (rest *posix-argv*)))
+(nvim:defun load-plugins :sync (plugins)
+  (declare (opts ignore))
+  (map NIL #'load-plugin plugins))
 
 (nvim:connect)
