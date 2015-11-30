@@ -1,4 +1,4 @@
-(in-package #:cl-msgpack-rpc)
+(in-package #:msgpack-rpc)
 
 (defvar *msg-id* 0 "Unique id for messages.")
 (defvar *socket* NIL "Socket used for reading/writing.")

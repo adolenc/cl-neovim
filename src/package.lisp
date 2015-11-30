@@ -1,6 +1,6 @@
 (in-package :cl-user)
 
-(defpackage #:cl-msgpack-rpc
+(defpackage #:msgpack-rpc
   (:nicknames #:mrpc)
   (:use #:cl
         #:messagepack
@@ -20,7 +20,7 @@
 (defpackage #:cl-neovim
   (:nicknames #:nvim)
   (:use #:cl
-        #:mrpc
+        #:msgpack-rpc
         #:form-fiddle
         #:split-sequence)
   (:shadow #:defun
