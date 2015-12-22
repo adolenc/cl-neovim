@@ -66,7 +66,7 @@ callback-type  ::= defcommand | defautocmd | defun
 sync-specifier ::= :sync
 args           ::= lambda-list [&opts args-opt*]?
 args-opt       ::= option | (option alternative-name)
-declare-opts   ::= (declare (opts [declare-opt* | ignore]))
+declare-opts   ::= (declare (opts declare-opt*))
 declare-opt    ::= option | (option value)
 ````
 `callback-type` specifies the type of callback registered with neovim: `defcommand` for commands, `defautocmd` for autocommands and `defun` for functions.
@@ -90,8 +90,6 @@ While these are full option names, you can also specify alternative names for th
 <!--- copied directly from python host: neovim/plugin/decorators.py#L45-L134 -->
 
 Note that you can specify just the name of the option in which case default values are assumed, or an `(option value)` list if you want to assign custom values for options.
-
-In case you want to write plugin or functions which you will manually call via `rpcrequest` or `rpcnotify` (so circumventing the host architecture), you should specify an option `ignore` inside `declare-opts`, so you can just list the arguments for function in the call without having to wrap them into artificial lists.
 
 ## Sample plugin
 You can find example of a simple plugin (a translation of python example from [:h remote-plugin-example](http://neovim.io/doc/user/remote_plugin.html#remote-plugin-example)) in [rplugin/lisp/sample-plugin.lisp](https://github.com/adolenc/cl-neovim/blob/master/rplugin/lisp/sample-plugin.lisp).

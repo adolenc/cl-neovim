@@ -1,6 +1,7 @@
 (in-package #:cl-neovim)
 
 (defparameter *debug* NIL)
+(defparameter *using-host* NIL "Variable that host binds to T when it loads plugins.")
 
 (defparameter *specs* NIL "A list of all the specs nvim needs.")
 (defparameter *path* NIL "A list of all the specs nvim needs.")
@@ -123,7 +124,8 @@
              (sync (member :sync qualifiers))
              (raw-declare-opts (rest (assoc 'opts (cdar decls) :test #'symbol-name=)))
              (declare-opts (fill-declare-opts raw-declare-opts))
-             (not-a-host-p (member 'ignore raw-declare-opts :test #'symbol-name=))
+             (not-a-host-p (or (not (boundp *using-host*))
+                               (and (boundp *using-host*) (not *using-host*))))
              (arglist (generate-arglist args arglist-opts declare-opts nvim-opts))
              (spec-opts (generate-specs declare-opts type))
              (callback-name (generate-callback-name type name spec-opts))
