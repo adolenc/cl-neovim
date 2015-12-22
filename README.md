@@ -8,27 +8,21 @@ The simplest way to install the package is to use [quicklisp](https://www.quickl
 
     $ git clone https://github.com/adolenc/cl-neovim ~/quicklisp/local-projects/cl-neovim/
 
-You will also need `sbcl` (though, as specified later, other implementations can also work) and `libuv1-dev` binaries which you should be able to install with your package manager.
+You will also need `sbcl` (though, as specified later, you can also use other implementations) and `libuv1-dev` binaries which you should be able to install with your package manager.
 
 #### Using plugin host
 The easiest way to install and test host is to use [vim-plug](https://github.com/junegunn/vim-plug). Add
 
-    Plug 'cl-neovim'
+    Plug 'adolenc/cl-neovim'
 
-into your .nvimrc and symlink `cl-neovim` directory to `~/.nvim/plugged/`:
+into your .nvimrc and run `:PlugInstall` from within Neovim. This installs the host and a [sample plugin](https://github.com/adolenc/cl-neovim/blob/master/rplugin/lisp/sample-plugin.lisp), which you can test by running `$ nvim -c UpdateRemotePlugins` and restarting neovim. After this, executing `:LispSampleCmd`, `:call LispSampleFunc()` or entering a lisp buffer should trigger the line under cursor to be rewritten (but only the first 5 times).
 
-    $ ln -s ~/quicklisp/local-projects/cl-neovim ~/.nvim/plugged/cl-neovim
+In case you would like to install the host manually, you need to copy `autoload/` and `plugin/` folders into your `.nvim/` folder.
 
-This installs the host and a [sample plugin](https://github.com/adolenc/cl-neovim/blob/master/rplugin/lisp/sample-plugin.lisp), which you can test by running `$ nvim -c UpdateRemotePlugins` and restarting neovim. After this, executing `:LispSampleCmd`, `:call LispSampleFunc()` or entering a lisp buffer should trigger the line under cursor to be rewritten (but only the first 5 times).
-
-In case you would like to install the host manually, you need to copy `autoload/` and `plugin/` folders into `~/.nvim/` folder:
-
-    $ cp -r ~/quicklisp/local-projects/cl-neovim/autoload ~/quicklis/local-projects/cl-neovim/plugin ~/.nvim/
-
-Sbcl is used as the default lisp implementation and plugin writers should try and make sure their plugins work with it. While this is probably not a good idea for many reasons, you can make host (and subsequently all the lisp plugins you have installed) use your favourite implementation by setting `g:lisp_implementation` variable in your `.nvimrc` to a list of `[{cmd}[, {args}...]]`. For it to work properly, command should start the implementation, load `"$LISP_HOST"` file ([autoload/host.lisp](https://github.com/adolenc/cl-neovim/blob/master/autoload/host.lisp)), and not write anything to standard input/output by itself (e.g. for sbcl this would look like `let g:lisp_implementation = ["sbcl", "--script", "$LISP_HOST"]`).
+Sbcl is used as the default Lisp implementation and plugin writers should try and make sure their plugins work with it. While this is probably not a good idea for many reasons, you can make host (and subsequently all the lisp plugins you have installed) use your favourite implementation by setting `g:lisp_implementation` variable in your `.nvimrc` to a list of `[{cmd}[, {args}...]]`. For it to work properly, command should start the implementation, load `"$LISP_HOST"` file ([autoload/host.lisp](https://github.com/adolenc/cl-neovim/blob/master/autoload/host.lisp)), and not write anything to standard input/output by itself (e.g. for sbcl this would look like `let g:lisp_implementation = ["sbcl", "--script", "$LISP_HOST"]`).
 
 #### Using the package
-To use the package, run neovim and make it listen to the some address (can also be a named pipe):
+To use the package, run neovim and make it listen to some address (can also be a named pipe):
 
     $ NVIM_LISTEN_ADDRESS=127.0.0.1:7777 nvim
 
