@@ -93,3 +93,8 @@ Are very welcome. As a relative newcomer to Common Lisp I would be really happy 
 
 ## Support
 At the moment I develop this library on Debian GNU/Linux OS and use SBCL and Quicklisp. It should not be too much work to make it work on other systems (I would assume the problems are mainly with the host architecture located in [autoload/](https://github.com/adolenc/cl-neovim/blob/master/autoload/) directory) so if there is request I'd be more than willing to port it (or merge the port in).
+
+## License
+Copyright (c) 2015 Andrej Dolenc
+
+Licensed under the MIT License.

@@ -1,6 +1,7 @@
 (asdf:defsystem #:cl-neovim
-  :description "Common lisp client for neovim"
-  :author "Andrej Dolenc andrej.dolenc@student.uni-lj.si"
+  :description "Common Lisp client for Neovim"
+  :author "Andrej Dolenc <andrej.dolenc@student.uni-lj.si>"
+  :license "MIT"
   :depends-on (#:babel
                #:split-sequence
                #:form-fiddle
