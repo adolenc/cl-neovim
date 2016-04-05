@@ -12,4 +12,5 @@
   :components ((:file "src/package")
                (:file "src/msgpack-rpc")
                (:file "src/cl-neovim")
-               (:file "src/interface")))
+               (:file "src/interface"))
+  :in-order-to ((test-op (test-op cl-lambda-calculus-test))))
