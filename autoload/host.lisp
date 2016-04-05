@@ -6,18 +6,23 @@
 
 (ql:quickload :cl-neovim :silent t)
 
-
+(defparameter *loaded-plugin-specs* '())
 (defparameter *dbg-stream* NIL)
 
 (defun load-plugin (path)
-  (let ((nvim::*using-host* T))
-    (setf nvim::*path* path)
-    (load path)))
+  (let ((nvim::*specs* '())
+        (nvim::*path* path))
+    ; (setf nvim::*path* path)
+    (load path)
+    (unless (assoc path *loaded-plugin-specs* :test #'equal)
+      (push (cons path nvim::*specs*) *loaded-plugin-specs*))))
 
 (nvim:defun "specs" :sync (path)
-  (let ((nvim::*specs* '()))
-    (load-plugin path)
-    nvim::*specs*))
+  ; Either the plugin was already loaded in which case the specs should be available, or we need to load it
+  (or (rest (assoc path *loaded-plugin-specs* :test #'equal))
+      (let ((nvim::*specs* '()))
+        (load-plugin path)
+        nvim::*specs*)))
 
 (nvim:defun poll :sync ()
   "ok")
@@ -30,4 +35,6 @@
     (let ((*error-output* *standard-output*))
       (map NIL #'load-plugin plugins))))
 
+
+(setf nvim::*using-host* T)
 (nvim:connect)

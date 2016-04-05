@@ -1,15 +1,15 @@
 (in-package #:cl-neovim)
 
-(defparameter *debug* NIL)
-(defparameter *using-host* NIL "Variable that host binds to T when it loads plugins.")
+(defparameter *debug* "/tmp/debug.log")
+(defvar *using-host* NIL "Variable that host binds to T when it loads plugins.")
 
-(defparameter *specs* NIL "A list of all the specs nvim needs.")
-(defparameter *path* NIL "A list of all the specs nvim needs.")
-(defparameter *nvim-types* (mrpc:define-extension-types
-                             '(0
-                               Buffer
-                               Window
-                               Tabpage)))
+(defvar *specs* NIL "A list of all the specs nvim needs.")
+(defvar *path* NIL "A list of all the specs nvim needs.")
+(defvar *nvim-types* (mrpc:define-extension-types
+                       '(0
+                         Buffer
+                         Window
+                         Tabpage)))
 
 (cl:defun dbg (str &rest args)
   (if *debug*

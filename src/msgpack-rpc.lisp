@@ -52,12 +52,12 @@
   (let* ((mpk:*decoder-prefers-lists* T)
          (mpk:*decode-bin-as-string* T)
          (msg (mpk:decode data)))
-    (nvim::dbg "< ~A~%" data)
+    ; (nvim::dbg "< ~A~%" data)
     (nvim::dbg "< ~A~%" msg)
     (cond ((requestp msg)
            (with-request msg
              (bt:make-thread
-               #'(lambda () (nvim::dbg "~A :: ~A~%" *socket* *standard-output*)
+               #'(lambda () ; (nvim::dbg "~A :: ~A~%" *socket* *standard-output*)
                              (handler-case (send-response msg-id NIL
                                                           (apply (gethash msg-method *request-callbacks*) msg-params))
                (error (desc) (send-response msg-id (format nil "~A" desc) NIL)))))))
@@ -74,9 +74,9 @@
 
 (defun send (bytes)
   "Send bytes via *socket*."
-  (nvim::dbg "THR: ~A~%" (bt:all-threads))
-  (nvim::dbg "SENDING VIA [~A] ~A ::  ~A~%" *connection-type* *socket* *standard-output*)
-  (nvim::dbg "> ~A~%" bytes)
+  ; (nvim::dbg "THR: ~A~%" (bt:all-threads))
+  ; (nvim::dbg "SENDING VIA [~A] ~A ::  ~A~%" *connection-type* *socket* *standard-output*)
+  (nvim::dbg "> ~A~%" (mpk:decode bytes))
   (if (eq *connection-type* :stdio)
     (loop for b across bytes do (write-byte b *socket*) finally (force-output))
     (if *socket*
