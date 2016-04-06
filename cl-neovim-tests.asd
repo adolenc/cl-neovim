@@ -8,8 +8,6 @@
   :components ((:file "t/package")
                (:file "t/common"))
   :perform (test-op (op c)
-             ; TODO: FIX, does not work.
-             ; (funcall (intern (symbol-name :connect) (find-package :cl-neovim)) :file "/tmp/nvim")
-             ; (funcall (intern (symbol-name :run!) (find-package :fiveam))
-             ;          (intern (symbol-name :neovim-test-suite) (find-package :fiveam)))
-             ))
+             (funcall (intern (symbol-name :connect) (find-package :cl-neovim)) :file "/tmp/nvim")
+             (funcall (intern (symbol-name :run!) (find-package :fiveam))
+                      (intern (symbol-name :neovim-test-suite) (find-package :cl-neovim-tests)))))

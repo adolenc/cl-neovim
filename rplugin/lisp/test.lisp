@@ -3,6 +3,7 @@
 
 
 (nvim:defcommand lisp-host-run-tests :sync ()
-   (with-open-file (*standard-output* "/tmp/out.log" :direction :output :if-does-not-exist :create :if-exists :supersede)
+   (let ((*standard-output* nvim:*debug-stream*)
+         (*error-output* nvim:*debug-stream*))
      (fiveam:run! 'neovim-test-suite)
      (hmmm)))
