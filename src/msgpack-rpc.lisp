@@ -52,14 +52,13 @@
   (let* ((mpk:*decoder-prefers-lists* T)
          (mpk:*decode-bin-as-string* T)
          (msg (mpk:decode data)))
-    ; (nvim::dbg "< ~A~%" data)
-    (nvim::dbg "< ~A~%" msg)
+    (format nvim:*debug-stream* "< ~A~%" msg)
+    (force-output nvim:*debug-stream*)
     (cond ((requestp msg)
            (with-request msg
              (bt:make-thread
-               #'(lambda () ; (nvim::dbg "~A :: ~A~%" *socket* *standard-output*)
-                             (handler-case (send-response msg-id NIL
-                                                          (apply (gethash msg-method *request-callbacks*) msg-params))
+               #'(lambda () (handler-case (send-response msg-id NIL
+                                                         (apply (gethash msg-method *request-callbacks*) msg-params))
                (error (desc) (send-response msg-id (format nil "~A" desc) NIL)))))))
           ((responsep msg)
            (with-response msg
@@ -74,9 +73,8 @@
 
 (defun send (bytes)
   "Send bytes via *socket*."
-  ; (nvim::dbg "THR: ~A~%" (bt:all-threads))
-  ; (nvim::dbg "SENDING VIA [~A] ~A ::  ~A~%" *connection-type* *socket* *standard-output*)
-  (nvim::dbg "> ~A~%" (mpk:decode bytes))
+  (format nvim:*debug-stream* "> ~A~%" (mpk:decode bytes))
+  (force-output nvim:*debug-stream*)
   (if (eq *connection-type* :stdio)
     (loop for b across bytes do (write-byte b *socket*) finally (force-output))
     (if *socket*
@@ -155,13 +153,15 @@
 (defun register-request-callback (name fn)
   "Register a function which will get called when server sends
    request for `name'."
-  (nvim::dbg "REG-R: ~A~%" name)
+  (format nvim:*debug-stream* "REG-R: ~A~%" name)
+  (force-output nvim:*debug-stream*)
   (setf (gethash name *request-callbacks*) fn))
 
 (defun register-notification-callback (name fn)
   "Register a function which will get called when server sends
    request for `name'."
-  (nvim::dbg "REG-N: ~A~%" name)
+  (format nvim:*debug-stream* "REG-N: ~A~%" name)
+  (force-output nvim:*debug-stream*)
   (setf (gethash name *notification-callbacks*) fn))
 
 (defun remove-request-callback (name)

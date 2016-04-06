@@ -7,12 +7,10 @@
 (ql:quickload :cl-neovim :silent t)
 
 (defparameter *loaded-plugin-specs* '())
-(defparameter *dbg-stream* NIL)
 
 (defun load-plugin (path)
   (let ((nvim::*specs* '())
         (nvim::*path* path))
-    ; (setf nvim::*path* path)
     (load path)
     (unless (assoc path *loaded-plugin-specs* :test #'equal)
       (push (cons path nvim::*specs*) *loaded-plugin-specs*))))
@@ -28,12 +26,13 @@
   "ok")
 
 (nvim:defun enable-debugging :sync (filename)
-  (setf *dbg-stream* filename))
+  (setf nvim:*debug-stream* (open filename :direction :output :if-does-not-exist :create :if-exists :append))
+  T)
 
 (nvim:defun load-plugins :sync (plugins)
-  (with-open-file (*standard-output* (or *dbg-stream* "/dev/null") :direction :output :if-does-not-exist :create :if-exists :append)
-    (let ((*error-output* *standard-output*))
-      (map NIL #'load-plugin plugins))))
+  (let ((*standard-output* nvim:*debug-stream*)
+        (*error-output* nvim:*debug-stream*))
+    (map NIL #'load-plugin plugins)))
 
 
 (setf nvim::*using-host* T)

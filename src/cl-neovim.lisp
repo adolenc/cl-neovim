@@ -1,6 +1,6 @@
 (in-package #:cl-neovim)
 
-(defparameter *debug* "/tmp/debug.log")
+(defparameter *debug-stream* (make-broadcast-stream))
 (defvar *using-host* NIL "Variable that host binds to T when it loads plugins.")
 
 (defvar *specs* NIL "A list of all the specs nvim needs.")
@@ -10,11 +10,6 @@
                          Buffer
                          Window
                          Tabpage)))
-
-(cl:defun dbg (str &rest args)
-  (if *debug*
-    (with-open-file (s *debug* :direction :output :if-exists :append :if-does-not-exist :create)
-      (apply #'format s str args))))
 
 (cl:defun plist->hash (plist)
   "Convert property list plist into hash table. Keys are transformed into

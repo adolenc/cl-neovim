@@ -29,4 +29,5 @@
            #:defcommand
            #:defautocmd
            #:defun
+           #:*debug-stream*
            #:finish))
