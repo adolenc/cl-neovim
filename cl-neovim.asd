@@ -5,12 +5,9 @@
   :depends-on (#:babel
                #:split-sequence
                #:form-fiddle
-               #:cl-messagepack
-               #:cl-async
-               #:bordeaux-threads)
+               #:cl-messagepack-rpc)
   :serial t
   :components ((:file "src/package")
-               (:file "src/msgpack-rpc")
                (:file "src/cl-neovim")
                (:file "src/interface"))
   :in-order-to ((test-op (test-op cl-neovim-tests))))

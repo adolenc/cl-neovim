@@ -5,6 +5,7 @@
 
 (defvar *specs* NIL "A list of all the specs nvim needs.")
 (defvar *path* NIL "A list of all the specs nvim needs.")
+(defvar *nvim-instance* NIL "Instance of connection to neovim")
 (defvar *nvim-types* (mrpc:define-extension-types
                        '(0
                          Buffer
@@ -131,7 +132,8 @@
                                     :type ,type
                                     :opts (plist->hash ',spec-opts)))
                  *specs*)
-           (,(if sync 'mrpc:register-request-callback 'mrpc:register-notification-callback)
+           (mrpc:register-callback
+             *nvim-instance*
              ,callback-name
              #'(lambda ,(if not-a-host-p args-and-opts `(&rest ,r))
                  ,docstring
@@ -154,9 +156,9 @@
   "Send nvim command to neovim socket and return the result."
   (let ((mrpc:*extended-types* *nvim-types*))
     (if async
-      (mrpc:notify command args)
-      (mrpc:request command args NIL))))
+      (apply #'mrpc:notify *nvim-instance* command args)
+      (apply #'mrpc:request *nvim-instance* command args))))
 
 (cl:defun connect (&rest args &key host port file)
   (let ((mrpc:*extended-types* *nvim-types*))
-    (apply #'mrpc:connect args)))
+    (setf *nvim-instance* (apply #'make-instance 'mrpc:client args))))

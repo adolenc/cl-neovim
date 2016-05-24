@@ -6,6 +6,11 @@
 
 (defparameter *calls* 0 "Counter for calls.")
 
+(defun increment-calls ()
+  (if (= *calls* 5)
+    (error "Too many calls!")
+    (incf *calls*)))
+
 (nvim:defcommand lisp-sample-cmd :sync (&rest args &opts (range r) bang)
   (declare (opts (range "%") (nargs "*") bang (complete "file")))
   (increment-calls)
@@ -20,8 +25,3 @@
   (declare (opts (vim-eval "line(\".\")-1")))
   (increment-calls)
   (setf (nvim:current-line) (format nil "Function: Called ~A times, args: ~A, eval: ~A" *calls* args curr-line)))
-
-(defun increment-calls ()
-  (if (= *calls* 5)
-    (error "Too many calls!")
-    (incf *calls*)))

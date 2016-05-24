@@ -1,26 +1,9 @@
 (in-package :cl-user)
 
-(defpackage #:msgpack-rpc
-  (:nicknames #:mrpc)
-  (:use #:cl
-        #:messagepack
-        #:bordeaux-threads 
-        #:cl-async)
-  (:export #:*extended-types*
-           #:define-extension-types
-           #:register-request-callback
-           #:register-notification-callback
-           #:remove-request-callback
-           #:remove-notification-callback
-           #:connect
-           #:request
-           #:notify
-           #:finish))
-
 (defpackage #:cl-neovim
   (:nicknames #:nvim)
   (:use #:cl
-        #:msgpack-rpc
+        #:messagepack-rpc
         #:form-fiddle
         #:split-sequence)
   (:shadow #:defun
@@ -29,5 +12,4 @@
            #:defcommand
            #:defautocmd
            #:defun
-           #:*debug-stream*
-           #:finish))
+           #:*debug-stream*))

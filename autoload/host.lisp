@@ -6,7 +6,9 @@
 
 (ql:quickload :cl-neovim :silent t)
 
-(defparameter *loaded-plugin-specs* '())
+(defparameter *loaded-plugin-specs* (list))
+
+(nvim:connect)
 
 (defun load-plugin (path)
   (let ((nvim::*specs* '())
@@ -27,6 +29,7 @@
 
 (nvim:defun enable-debugging :sync (filename)
   (setf nvim:*debug-stream* (open filename :direction :output :if-does-not-exist :create :if-exists :append))
+  (format nvim:*debug-stream* "Debug enabled~%") (force-output nvim:*debug-stream*)
   T)
 
 (nvim:defun load-plugins :sync (plugins)
@@ -34,6 +37,5 @@
         (*error-output* nvim:*debug-stream*))
     (map NIL #'load-plugin plugins)))
 
-
 (setf nvim::*using-host* T)
-(nvim:connect)
+(mrpc::run-forever (mrpc::event-loop nvim::*nvim-instance*))
