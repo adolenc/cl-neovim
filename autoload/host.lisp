@@ -17,22 +17,22 @@
     (unless (assoc path *loaded-plugin-specs* :test #'equal)
       (push (cons path nvim::*specs*) *loaded-plugin-specs*))))
 
-(nvim:defun "specs" :sync (path)
+(nvim:defun/s "specs" (path)
   ; Either the plugin was already loaded in which case the specs should be available, or we need to load it
   (or (rest (assoc path *loaded-plugin-specs* :test #'equal))
       (let ((nvim::*specs* '()))
         (load-plugin path)
         nvim::*specs*)))
 
-(nvim:defun poll :sync ()
+(nvim:defun/s poll ()
   "ok")
 
-(nvim:defun enable-debugging :sync (filename)
+(nvim:defun/s enable-debugging (filename)
   (setf nvim:*debug-stream* (open filename :direction :output :if-does-not-exist :create :if-exists :append))
   (format nvim:*debug-stream* "Debug enabled~%") (force-output nvim:*debug-stream*)
   T)
 
-(nvim:defun load-plugins :sync (plugins)
+(nvim:defun/s load-plugins (plugins)
   (let ((*standard-output* nvim:*debug-stream*)
         (*error-output* nvim:*debug-stream*))
     (map NIL #'load-plugin plugins)))

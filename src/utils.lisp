@@ -9,13 +9,6 @@
           do (setf (gethash (map 'string #'char-downcase (symbol-name k)) hash) v)
           finally (return hash))))
 
-(cl:defun lisp->vim-name (lisp-name)
-  "Convert lisp symbol into vim name. Basically turns hyphen-separated name
-   into camelcase string."
-  (let* ((str (symbol-name lisp-name))
-         (parts (split-sequence:split-sequence #\- str)))
-    (format nil "~{~:(~A~)~^~}" parts)))
-
 (cl:defun symbol-name= (symbol1 symbol2)
   "Compare two symbols by their name."
   (and (symbolp symbol1) (symbolp symbol2)

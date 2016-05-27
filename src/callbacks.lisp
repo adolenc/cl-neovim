@@ -66,45 +66,57 @@
                  (if (string= type "autocmd") (format nil ":~A" (getf spec-opts :pattern)) ""))
     name))
 
-(cl:defun construct-callback (type nvim-opts name-args-decls-body)
+(cl:defun construct-callback (type sync nvim-opts name args-and-opts body)
   "Construct the callback, register it with proper name, and generate specs
    based on the arguments passed."
-  (destructuring-bind (fun name qualifiers args-and-opts docstring decls body) (form-fiddle:split-lambda-form (cons 'defun name-args-decls-body))
-    (declare (ignore fun))
-    (destructuring-bind (&optional args arglist-opts) (split-sequence:split-sequence '&opts args-and-opts :test #'symbol-name=)
-      (let* ((name (if (stringp name) name (symbol->vim-name name)))
-             (sync (member :sync qualifiers))
-             (raw-declare-opts (rest (assoc 'opts (cdar decls) :test #'symbol-name=)))
-             (declare-opts (fill-declare-opts raw-declare-opts))
-             (not-a-host-p (or (not (boundp *using-host*))
-                               (and (boundp *using-host*) (not *using-host*))))
-             (arglist (generate-arglist args arglist-opts declare-opts nvim-opts))
-             (spec-opts (generate-specs declare-opts type))
-             (callback-name (generate-callback-name type name spec-opts))
-             (r (gensym)))
-        `(progn
-           (push (plist->string-hash (list :sync ,(if sync 1 0)
-                                           :name ,name
-                                           :type ,type
-                                           :opts (plist->string-hash ',spec-opts)))
-                 *specs*)
-           (mrpc:register-callback
-             *nvim-instance*
-             ,callback-name
-             #'(lambda ,(if not-a-host-p args-and-opts `(&rest ,r))
-                 ,docstring
-                 (destructuring-bind ,@(if not-a-host-p '(() ()) `(,arglist ,r))
-                   ,@body))))))))
+  (let ((fake-lambda-form `(defun ,name ,args-and-opts ,@body)))
+    (form-fiddle:with-destructured-lambda-form (:docstring docstring :declarations declarations :forms forms) fake-lambda-form
+      (destructuring-bind (&optional args arglist-opts) (split-sequence:split-sequence '&opts args-and-opts :test #'symbol-name=)
+        (let* ((name (if (stringp name) name (symbol->vim-name name)))
+               (raw-declare-opts (rest (assoc 'opts (cdar declarations) :test #'symbol-name=)))
+               (declare-opts (fill-declare-opts raw-declare-opts))
+               (not-a-host-p (or (not (boundp *using-host*))
+                                 (and (boundp *using-host*) (not *using-host*))))
+               (arglist (generate-arglist args arglist-opts declare-opts nvim-opts))
+               (spec-opts (generate-specs declare-opts type))
+               (callback-name (generate-callback-name type name spec-opts))
+               (r (gensym)))
+          `(progn
+             (push (plist->string-hash (list :sync ,(if sync 1 0)
+                                             :name ,name
+                                             :type ,type
+                                             :opts (plist->string-hash ',spec-opts)))
+                   *specs*)
+             (mrpc:register-callback
+               *nvim-instance*
+               ,callback-name
+               #'(lambda ,(if not-a-host-p args-and-opts `(&rest ,r))
+                   ,docstring
+                   (destructuring-bind ,@(if not-a-host-p '(() ()) `(,arglist ,r))
+                     ,@forms)))))))))
 
-(defmacro defcommand (&rest name-args-decls-body)
+(defmacro defcommand (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
-  (construct-callback "command" '(nargs range count bang register vim-eval) name-args-decls-body))
+  (construct-callback "command" NIL '(nargs range count bang register vim-eval) name args body))
 
-(defmacro defautocmd (&rest name-args-decls-body)
+(defmacro defcommand/s (name args &body body)
+  ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
+  (construct-callback "command" T '(nargs range count bang register vim-eval) name args body))
+
+
+(defmacro defautocmd (name args &body body)
   ; nvim-options for autocmd found in runtime/autoload/remote/define.vim#L121-L128
-  (construct-callback "autocmd" 'args name-args-decls-body))
+  (construct-callback "autocmd" NIL 'args name args body))
 
-(defmacro defun (&rest name-args-decls-body)
+(defmacro defautocmd/s (name args &body body)
+  ; nvim-options for autocmd found in runtime/autoload/remote/define.vim#L121-L128
+  (construct-callback "autocmd" T 'args name args body))
+
+
+(defmacro defun (name args &body body)
   ; nvim-options for function found in runtime/autoload/remote/define.vim#L158-L166
-  (construct-callback "function" '(args vim-eval) name-args-decls-body))
+  (construct-callback "function" NIL '(args vim-eval) name args body))
 
+(defmacro defun/s (name args &body body)
+  ; nvim-options for function found in runtime/autoload/remote/define.vim#L158-L166
+  (construct-callback "function" T '(args vim-eval) name args body))

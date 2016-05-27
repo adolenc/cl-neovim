@@ -10,6 +10,9 @@
            #:connect)
   (:export #:connect
            #:defcommand
+           #:defcommand/s
            #:defautocmd
+           #:defautocmd/s
            #:defun
+           #:defun/s
            #:*debug-stream*))

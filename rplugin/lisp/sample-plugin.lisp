@@ -11,12 +11,12 @@
     (error "Too many calls!")
     (incf *calls*)))
 
-(nvim:defcommand lisp-sample-cmd :sync (&rest args &opts (range r) bang)
+(nvim:defcommand/s lisp-sample-cmd (&rest args &opts (range r) bang)
   (declare (opts (range "%") (nargs "*") bang (complete "file")))
   (increment-calls)
   (setf (nvim:current-line) (format nil "Command: Called ~A times, args: ~A, range: ~A, bang: ~A" *calls* args r bang)))
 
-(nvim:defautocmd buf-enter :sync (filename)
+(nvim:defautocmd/s buf-enter (filename)
   (declare (opts (pattern "*.lisp") (vim-eval "expand(\"<afile>\")")))
   (increment-calls)
   (setf (nvim:current-line) (format nil "Autocmd: Called ~A times, file: ~A" *calls* filename))) 
