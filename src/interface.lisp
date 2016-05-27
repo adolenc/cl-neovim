@@ -1,37 +1,18 @@
 (in-package #:cl-neovim)
 
 
-(eval-when (:compile-toplevel)
-
-(defparameter *dangerous-names* '("vim_eval"))
-
-(cl:defun string->symbol (str) "Convert string into symbol." (intern (substitute #\- #\_ (format nil "~:@(~A~)" str)))) 
-
-(cl:defun parse-args (args)
-  "Extract names from nvim api's metadata of arguments into a list of symbols."
-  (cond ((listp args) (mapcar #'(lambda (arg) (string->symbol (second arg))) args))
-        ((stringp args) (list (string->symbol args)))
-        (t NIL)))
-
-(cl:defun setterp (name) "Is name a setter?" (search "set_" name))
-
-(cl:defun clean-up-name (name &optional (modifiers '("vim" "get" "set")))
-  "Removes all substrings specified in modifiers from name."
-  (let* ((components (split-sequence #\_ name))
-         (main-components (remove-if #'(lambda (c) (member c modifiers :test #'string=)) components)))
-    (format nil "~{~A~^_~}" main-components)))
-
-(cl:defun symbol-concat (&rest symbols) 
-  "Concatenate symbol names and return resulting symbol."
-  (intern (apply #'concatenate 'string (mapcar #'symbol-name symbols))))
-
-) ; end of eval-when
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (cl:defun parse-args (args)
+    "Extract names from nvim api's metadata of arguments into a list of symbols."
+    (cond ((listp args) (mapcar #'(lambda (arg) (vim-name->symbol (second arg))) args))
+          ((stringp args) (list (vim-name->symbol args)))
+          (t NIL))))
 
 (defmacro mdata->lisp-function (name args ret can-fail deferred)
   "Create and export functions from the parsed nvim's api."
   (declare (ignore ret can-fail deferred))
   (let* ((args (parse-args args))
-         (n (string->symbol (if (member name *dangerous-names* :test #'string-equal) name (clean-up-name name))))
+         (n (vim-name->symbol (if (member name *dangerous-names* :test #'string-equal) name (clean-up-name name))))
          (async-n (symbol-concat n '/a)))
     (if (setterp name)
       `(progn (cl:defun (setf ,n) (,@(last args) ,@(butlast args))

@@ -8,6 +8,8 @@
                #:cl-messagepack-rpc)
   :serial t
   :components ((:file "src/package")
+               (:file "src/utils")
+               (:file "src/vim-utils")
                (:file "src/cl-neovim")
                (:file "src/interface"))
   :in-order-to ((test-op (test-op cl-neovim-tests))))

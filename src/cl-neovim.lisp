@@ -12,39 +12,6 @@
                          Window
                          Tabpage)))
 
-(cl:defun plist->hash (plist)
-  "Convert property list plist into hash table. Keys are transformed into
-   lowercase strings."
-  (let ((hash (make-hash-table :test #'equal)))
-    (loop for (k v) on plist by #'cddr
-          do (setf (gethash (map 'string #'char-downcase (symbol-name k)) hash) v)
-          finally (return hash))))
-
-(cl:defun lisp->vim-name (lisp-name)
-  "Convert lisp symbol into vim name. Basically turns hyphen-separated name
-   into camelcase string."
-  (let* ((str (symbol-name lisp-name))
-         (parts (split-sequence:split-sequence #\- str)))
-    (format nil "~{~:(~A~)~^~}" parts)))
-
-(cl:defun symbol-name= (symbol1 symbol2)
-  "Compare two symbols by their name."
-  (and (symbolp symbol1) (symbolp symbol2)
-       (string= (symbol-name symbol1) (symbol-name symbol2))))
-
-(cl:defun mklst (obj) (if (listp obj) obj (list obj)))
-
-(cl:defun alist-stable-intersection (as bs)
-  "Intersection between 2 association lists as and bs, where the order is the
-   same as in as and the values are associations from as."
-  (let ((bs-alist (make-alist bs)))
-    (remove-if-not #'(lambda (a) (assoc (car (mklst a)) bs-alist :test #'symbol-name=)) as)))
-
-(cl:defun make-alist (lst)
-  "Wrap a list of symbols (or lists) to a list of lists with first element
-   being symbol."
-  (mapcar #'mklst lst))
-
 (cl:defun short-names (args)
   "Return short names for &opts arguments"
   (mapcar #'(lambda (arg) (if (and (not (second arg))
@@ -116,7 +83,7 @@
   (destructuring-bind (fun name qualifiers args-and-opts docstring decls body) (form-fiddle:split-lambda-form (cons 'defun name-args-decls-body))
     (declare (ignore fun))
     (destructuring-bind (&optional args arglist-opts) (split-sequence:split-sequence '&opts args-and-opts :test #'symbol-name=)
-      (let* ((name (if (stringp name) name (lisp->vim-name name)))
+      (let* ((name (if (stringp name) name (symbol->vim-name name)))
              (sync (member :sync qualifiers))
              (raw-declare-opts (rest (assoc 'opts (cdar decls) :test #'symbol-name=)))
              (declare-opts (fill-declare-opts raw-declare-opts))
@@ -127,10 +94,10 @@
              (callback-name (generate-callback-name type name spec-opts))
              (r (gensym)))
         `(progn
-           (push (plist->hash (list :sync ,(if sync 1 0)
-                                    :name ,name
-                                    :type ,type
-                                    :opts (plist->hash ',spec-opts)))
+           (push (plist->string-hash (list :sync ,(if sync 1 0)
+                                           :name ,name
+                                           :type ,type
+                                           :opts (plist->string-hash ',spec-opts)))
                  *specs*)
            (mrpc:register-callback
              *nvim-instance*
