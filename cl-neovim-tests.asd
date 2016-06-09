@@ -1,13 +1,13 @@
 (asdf:defsystem #:cl-neovim-tests
-  :description "Tests for cl-neovim"
+  :description "Tests for cl-neovim."
   :author "Andrej Dolenc <andrej.dolenc@student.uni-lj.si>"
   :license "MIT"
   :depends-on (#:cl-neovim
                #:fiveam)
   :serial t
   :components ((:file "t/package")
+               (:file "t/setup")
                (:file "t/common"))
   :perform (test-op (op c)
-             (funcall (intern (symbol-name :connect) (find-package :cl-neovim)) :file "/tmp/nvim")
-             (funcall (intern (symbol-name :run!) (find-package :fiveam))
-                      (intern (symbol-name :neovim-test-suite) (find-package :cl-neovim-tests)))))
+             (uiop:symbol-call '#:fiveam '#:run!
+                               (uiop:intern* :neovim-test-suite :cl-neovim-tests))))

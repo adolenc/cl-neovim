@@ -11,9 +11,11 @@
              (nvim:command-output "echo LispHostTest1()"))))
 
 
-(nvim:defcommand/s lisp-host-run-tests ()
-   (let ((*standard-output* nvim:*debug-stream*)
-         (*error-output* nvim:*debug-stream*))
-     (fiveam:run! 'neovim-test-suite) (force-output)
-     ; TODO: still results in rpc error (by printing to stdout?)
-     T))
+(nvim:defcommand/s lisp-host-run-tests (&rest args)
+  (declare (opts (nargs "*")))
+  (let* ((*standard-output* nvim:*debug-stream*)
+         (*error-output* nvim:*debug-stream*)
+         (test-results (with-output-to-string (fiveam:*test-dribble*)
+                         (fiveam:run! 'neovim-test-suite))))
+    (nvim:command (format nil "echo '~A'" test-results))
+    args))
