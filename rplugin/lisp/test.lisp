@@ -13,9 +13,7 @@
 
 (nvim:defcommand/s lisp-host-run-tests (&rest args)
   (declare (opts (nargs "*")))
-  (let* ((*standard-output* nvim:*debug-stream*)
-         (*error-output* nvim:*debug-stream*)
-         (test-results (with-output-to-string (fiveam:*test-dribble*)
-                         (fiveam:run! 'neovim-test-suite))))
+  (let ((test-results (with-output-to-string (fiveam:*test-dribble*)
+                        (fiveam:run! 'neovim-test-suite))))
     (nvim:command (format nil "echo '~A'" test-results))
     args))

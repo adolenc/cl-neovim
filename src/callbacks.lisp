@@ -66,6 +66,11 @@
                  (if (string= type "autocmd") (format nil ":~A" (getf spec-opts :pattern)) ""))
     name))
 
+(defmacro redirect-output (&body body)
+  `(let ((*standard-output* *debug-stream*)
+         (*error-output* *debug-stream*))
+     ,@body))
+
 (cl:defun construct-callback (type sync nvim-opts name args-and-opts body)
   "Construct the callback, register it with proper name, and generate specs
    based on the arguments passed."
@@ -93,7 +98,8 @@
                #'(lambda ,(if not-a-host-p args-and-opts `(&rest ,r))
                    ,docstring
                    (destructuring-bind ,@(if not-a-host-p '(() ()) `(,arglist ,r))
-                     ,@forms)))))))))
+                     (redirect-output
+                       ,@forms))))))))))
 
 (defmacro defcommand (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87

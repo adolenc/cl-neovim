@@ -1,7 +1,7 @@
 (in-package #:cl-neovim)
 
 
-(defparameter *debug-stream* (make-broadcast-stream))
+(defparameter *debug-stream* *standard-output*)
 (defvar *using-host* NIL "Variable that host binds to T when it loads plugins.")
 
 (defvar *specs* NIL "A list of all the specs nvim needs.")

@@ -37,5 +37,6 @@
         (*error-output* nvim:*debug-stream*))
     (map NIL #'load-plugin plugins)))
 
-(setf nvim::*using-host* T)
+(setf nvim::*using-host* T
+      nvim:*debug-stream* (make-broadcast-stream))
 (mrpc::run-forever (mrpc::event-loop nvim::*nvim-instance*))
