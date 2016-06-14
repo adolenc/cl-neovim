@@ -1,9 +1,6 @@
 (in-package #:cl-neovim)
 
 
-(defparameter *dangerous-names* '("vim_eval"))
-
-
 (cl:defun vim-name->symbol (str)
   "Convert string into symbol."
   (intern (substitute #\- #\_ (format nil "~:@(~A~)" str)))) 

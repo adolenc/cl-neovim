@@ -33,7 +33,7 @@ back to the caller immediately and discarding all return values/errors."
 (defmacro mdata->lisp-function (&key name parameters &allow-other-keys)
   "Create and export functions from the parsed nvim's api."
   (let* ((parameters (parse-parameters parameters))
-         (fn-name (vim-name->symbol (if (member name *dangerous-names* :test #'string-equal) name (clean-up-name name))))
+         (fn-name (vim-name->symbol (clean-up-name name)))
          (sync-fn-name (symbol-concat fn-name '/s))
          (async-fn-name (symbol-concat fn-name '/a))
          (funcalls `((,fn-name #'call/s)

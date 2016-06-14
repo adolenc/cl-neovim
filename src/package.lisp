@@ -7,6 +7,7 @@
         #:form-fiddle
         #:split-sequence)
   (:shadow #:defun
+           #:eval
            #:connect)
   (:export #:connect
            #:defcommand
