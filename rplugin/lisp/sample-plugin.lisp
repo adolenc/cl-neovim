@@ -1,6 +1,6 @@
 (defpackage #:sample-plugin
   (:use #:cl #:cl-neovim)
-  (:shadowing-import-from #:cl #:defun))
+  (:shadowing-import-from #:cl #:defun #:eval))
 (in-package #:sample-plugin)
 
 
