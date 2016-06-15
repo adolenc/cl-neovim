@@ -80,8 +80,6 @@
         (let* ((name (if (stringp name) name (symbol->vim-name name)))
                (raw-declare-opts (rest (assoc 'opts (cdar declarations) :test #'symbol-name=)))
                (declare-opts (fill-declare-opts raw-declare-opts))
-               (not-a-host-p (or (not (boundp *using-host*))
-                                 (and (boundp *using-host*) (not *using-host*))))
                (arglist (generate-arglist args arglist-opts declare-opts nvim-opts))
                (spec-opts (generate-specs declare-opts type))
                (callback-name (generate-callback-name type name spec-opts))
@@ -95,9 +93,9 @@
              (mrpc:register-callback
                *nvim-instance*
                ,callback-name
-               #'(lambda ,(if not-a-host-p args-and-opts `(&rest ,r))
+               #'(lambda (&rest ,r)
                    ,docstring
-                   (destructuring-bind ,@(if not-a-host-p '(() ()) `(,arglist ,r))
+                   (destructuring-bind ,arglist ,r
                      (redirect-output
                        ,@forms))))))))))
 
