@@ -3,15 +3,15 @@ let s:lisp_host_script = expand('<sfile>:p:h') . "/host.lisp"
 function! lisp#GetImplementationCmd()
   " While sbcl should probably be the default implementation everyone
   " writing plugins uses, we do allow user to specify his favourite
-  " implementation via g:lisp_implementation variable if he so desires.
+  " implementation via g:lisp_host_prog variable if he so desires.
 
-  if exists('g:lisp_implementation')
-    let implementation = g:lisp_implementation
+  if exists('g:lisp_host_prog')
+    let implementation = g:lisp_host_prog
   else
     let implementation = "sbcl"
   endif
 
-  if type(implementation) == 1
+  if type(implementation) == type("")
     " For the most common implementations, user shouldn't have to specify all
     " the arguments in a list, but just the name of the implementation as a
     " string.
