@@ -9,20 +9,18 @@
   (:shadow #:defun
            #:eval
            #:connect)
-  (:export #:connect
+
+  ;;; cl-neovim.lisp
+  (:export #:*debug-stream*
+           #:connect
            #:listen-once
-           #:defcommand
-           #:defcommand/s
-           #:defcommand/a
-           #:defautocmd
-           #:defautocmd/s
-           #:defautocmd/a
-           #:defun
-           #:defun/s
-           #:defun/a
            #:call/s
-           #:call/a
-           #:*debug-stream*)
+           #:call/a)
+  ;;; callbacks.lisp
+  (:export #:defcommand #:defcommand/s
+           #:defautocmd #:defautocmd/s
+           #:defun      #:defun/s)
+  ;;; api.lisp
   (:export #:api-info               #:api-info/s               #:api-info/a
            #:buffer-add-highlight   #:buffer-add-highlight/s   #:buffer-add-highlight/a
            #:buffer-clear-highlight #:buffer-clear-highlight/s #:buffer-clear-highlight/a
