@@ -33,15 +33,14 @@
 (def-nvim-mrpc-cb "Poll" ()
   "ok")
 
-(def-nvim-mrpc-cb "EnableDebugging" (filename)
-  (setf nvim:*debug-stream* (open filename :direction :output :if-does-not-exist :create :if-exists :append))
+(def-nvim-mrpc-cb "EnableLogging" (filename)
+  (setf nvim::*log-stream* (open filename :direction :output :if-does-not-exist :create :if-exists :append))
   T)
 
 (def-nvim-mrpc-cb "LoadPlugins" (plugins)
-  (let ((*standard-output* nvim:*debug-stream*)
-        (*error-output* nvim:*debug-stream*))
+  (nvim::redirect-output (nvim::*log-stream*)
     (map NIL #'load-plugin plugins)))
 
 (setf nvim::*using-host* T
-      nvim:*debug-stream* (make-broadcast-stream))
+      nvim::*log-stream* (make-broadcast-stream))
 (mrpc::run-forever (mrpc::event-loop nvim::*nvim-instance*))

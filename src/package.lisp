@@ -11,8 +11,7 @@
            #:connect)
 
   ;;; cl-neovim.lisp
-  (:export #:*debug-stream*
-           #:connect
+  (:export #:connect
            #:listen-once
            #:call/s
            #:call/a)

@@ -64,9 +64,9 @@
                (format nil "~A:~A:~A" *path* type name)
                (if (string= type "autocmd") (format nil ":~A" (getf spec-opts :pattern)) "")))
 
-(defmacro redirect-output (&body body)
-  `(let ((*standard-output* *debug-stream*)
-         (*error-output* *debug-stream*))
+(defmacro redirect-output ((&optional (where *log-stream*)) &body body)
+  `(let ((*standard-output* ,where)
+         (*error-output* ,where))
      ,@body))
 
 (cl:defun construct-callback (type sync nvim-opts name args-and-opts body)
@@ -99,7 +99,7 @@
                  #'(lambda (&rest ,r)
                      ,docstring
                      (destructuring-bind ,arglist ,r
-                       (redirect-output
+                       (redirect-output (*log-stream*)
                          ,@forms)))))))))))
 
 (defmacro defcommand (name args &body body)

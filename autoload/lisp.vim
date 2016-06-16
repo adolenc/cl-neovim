@@ -45,8 +45,8 @@ function! lisp#RequireLispHost(host)
     let channel_id = rpcstart(implementation_cmd[0], implementation_cmd[1:])
 
     if rpcrequest(channel_id, 'Poll') == 'ok'
-      if $NVIM_LISP_DEBUG != ''
-        call rpcrequest(channel_id, 'EnableDebugging', $NVIM_LISP_DEBUG)
+      if $NVIM_LISP_LOG_FILE != ''
+        call rpcrequest(channel_id, 'EnableLogging', $NVIM_LISP_LOG_FILE)
       endif
       call rpcrequest(channel_id, 'LoadPlugins', lisp_plugin_paths)
       return channel_id
