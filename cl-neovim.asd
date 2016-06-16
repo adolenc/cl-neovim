@@ -5,7 +5,6 @@
   :depends-on (#:babel
                #:split-sequence
                #:form-fiddle
-               #:jonathan
                #:cl-messagepack-rpc)
   :serial t
   :components ((:file "src/package")

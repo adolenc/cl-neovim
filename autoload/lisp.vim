@@ -60,12 +60,18 @@ endfunction
 
 """ Using cl-neovim from the REPL
 function! lisp#RegisterRepl()
+  " Register connected Lisp REPL as a fake `host', so that we can later define
+  " commands/autocmds/functions on it.
   let channel_id = lisp#FindReplChannelId()
   call remote#host#Register('lisp_repl', '*.lisp', channel_id)
   return channel_id
 endfunction
 
 function! lisp#FindReplChannelId()
+  " Find id of the channel neovim is currently using to communicate with our
+  " Lisp REPL. Unfortunately there doesn't seem to be a better way to do this
+  " than just asking every possible channel (from 1 upwards, since this is how
+  " neovim gives ids to its channels) whether it is a lisp repl.
   let MAX_CHANNEL_ID = 100
   let channel_id = 1
   while channel_id < MAX_CHANNEL_ID
@@ -82,21 +88,20 @@ function! lisp#FindReplChannelId()
 endfunction
 
 function! lisp#RegisterReplCallback(spec)
+  " Register a callback from REPL with neovim via our fake host.
   let type = a:spec.type
   let name = a:spec.name
   let sync = a:spec.sync
   let opts = a:spec.opts
-  let rpc_method = ''
+  let rpc_method = ':' . type . ':' . name
   let host = 'lisp_repl'
 
   if type == 'command'
-    let rpc_method .= ':command:'.name
     call remote#define#CommandOnHost(host, rpc_method, sync, name, opts)
   elseif type == 'autocmd'
-    let rpc_method .= ':autocmd:'.name.':'.get(opts, 'pattern', '*')
+    let rpc_method .= ':' . get(opts, 'pattern', '*')
     call remote#define#AutocmdOnHost(host, rpc_method, sync, name, opts)
   elseif type == 'function'
-    let rpc_method .= ':function:'.name
     call remote#define#FunctionOnHost(host, rpc_method, sync, name, opts)
   else
     echoerr 'Invalid declaration type: '.type

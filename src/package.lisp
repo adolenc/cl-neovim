@@ -5,7 +5,6 @@
   (:use #:cl
         #:messagepack-rpc
         #:form-fiddle
-        #:jonathan
         #:split-sequence)
   (:shadow #:defun
            #:eval
