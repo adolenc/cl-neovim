@@ -56,3 +56,49 @@ function! lisp#RequireLispHost(host)
   endtry
   throw 'Failed to load lisp host.'
 endfunction
+
+
+""" Using cl-neovim from the REPL
+function! lisp#RegisterRepl()
+  let channel_id = lisp#FindReplChannelId()
+  call remote#host#Register('lisp_repl', '*.lisp', channel_id)
+  return channel_id
+endfunction
+
+function! lisp#FindReplChannelId()
+  let MAX_CHANNEL_ID = 100
+  let channel_id = 1
+  while channel_id < MAX_CHANNEL_ID
+    try
+      if rpcrequest(channel_id, '__IsActiveLispRepl__') == 1
+        return channel_id
+      endif
+    catch
+      " pass
+    endtry
+    let channel_id += 1
+  endwhile
+  throw 'Could not find active Lisp REPL'
+endfunction
+
+function! lisp#RegisterReplCallback(spec)
+  let type = a:spec.type
+  let name = a:spec.name
+  let sync = a:spec.sync
+  let opts = a:spec.opts
+  let rpc_method = ''
+  let host = 'lisp_repl'
+
+  if type == 'command'
+    let rpc_method .= ':command:'.name
+    call remote#define#CommandOnHost(host, rpc_method, sync, name, opts)
+  elseif type == 'autocmd'
+    let rpc_method .= ':autocmd:'.name.':'.get(opts, 'pattern', '*')
+    call remote#define#AutocmdOnHost(host, rpc_method, sync, name, opts)
+  elseif type == 'function'
+    let rpc_method .= ':function:'.name
+    call remote#define#FunctionOnHost(host, rpc_method, sync, name, opts)
+  else
+    echoerr 'Invalid declaration type: '.type
+  endif
+endfunction

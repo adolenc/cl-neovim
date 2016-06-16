@@ -5,11 +5,13 @@
   (:use #:cl
         #:messagepack-rpc
         #:form-fiddle
+        #:jonathan
         #:split-sequence)
   (:shadow #:defun
            #:eval
            #:connect)
   (:export #:connect
+           #:listen-once
            #:defcommand
            #:defcommand/s
            #:defcommand/a

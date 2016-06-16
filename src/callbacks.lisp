@@ -60,11 +60,9 @@
 (cl:defun generate-callback-name (type name spec-opts)
   "Generate the callback name neovim will use when referring to this
    function/command/autocmd."
-  (if *path*
-    (concatenate 'string
-                 (format nil "~A:~A:~A" *path* type name)
-                 (if (string= type "autocmd") (format nil ":~A" (getf spec-opts :pattern)) ""))
-    name))
+  (concatenate 'string
+               (format nil "~A:~A:~A" *path* type name)
+               (if (string= type "autocmd") (format nil ":~A" (getf spec-opts :pattern)) "")))
 
 (defmacro redirect-output (&body body)
   `(let ((*standard-output* *debug-stream*)
@@ -80,24 +78,29 @@
         (let* ((name (if (stringp name) name (symbol->vim-name name)))
                (raw-declare-opts (rest (assoc 'opts (cdar declarations) :test #'symbol-name=)))
                (declare-opts (fill-declare-opts raw-declare-opts))
+               (in-host (and (boundp *using-host*) *using-host*))
                (arglist (generate-arglist args arglist-opts declare-opts nvim-opts))
                (spec-opts (generate-specs declare-opts type))
                (callback-name (generate-callback-name type name spec-opts))
+               (spec (gensym))
                (r (gensym)))
           `(progn
-             (push (plist->string-hash (list :sync ,(if sync 1 0)
-                                             :name ,name
-                                             :type ,type
-                                             :opts (plist->string-hash ',spec-opts)))
-                   *specs*)
-             (mrpc:register-callback
-               *nvim-instance*
-               ,callback-name
-               #'(lambda (&rest ,r)
-                   ,docstring
-                   (destructuring-bind ,arglist ,r
-                     (redirect-output
-                       ,@forms))))))))))
+             (let ((,spec (plist->string-hash (list :sync ,(if sync 1 0)
+                                                   :name ,name
+                                                   :type ,type
+                                                   :opts (plist->string-hash ',spec-opts)))))
+               (if ,in-host
+                 (push ,spec *specs*)
+                 (progn (register-repl *nvim-instance*)
+                        (register-repl-callback *nvim-instance* ,spec)))
+               (mrpc:register-callback
+                 *nvim-instance*
+                 ,callback-name
+                 #'(lambda (&rest ,r)
+                     ,docstring
+                     (destructuring-bind ,arglist ,r
+                       (redirect-output
+                         ,@forms)))))))))))
 
 (defmacro defcommand (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
