@@ -80,9 +80,10 @@ function! lisp#FindReplChannelId()
         return channel_id
       endif
     catch
-      " pass
+      continue
+    finally
+      let channel_id += 1
     endtry
-    let channel_id += 1
   endwhile
   throw 'Could not find active Lisp REPL'
 endfunction
