@@ -4,10 +4,11 @@
   :license "MIT"
   :depends-on (#:cl-neovim
                #:fiveam)
-  :serial t
-  :components ((:file "t/package")
-               (:file "t/setup")
-               (:file "t/common"))
+  :serial T
+  :components ((:module "t"
+                :components ((:file "package")
+                             (:file "setup")
+                             (:file "common"))))
   :perform (test-op (op c)
              (uiop:symbol-call '#:fiveam '#:run!
-                               (uiop:intern* :neovim-test-suite :cl-neovim-tests))))
+                               (uiop:find-symbol* '#:neovim-test-suite :cl-neovim-tests))))

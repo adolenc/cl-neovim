@@ -6,14 +6,14 @@
                #:split-sequence
                #:form-fiddle
                #:cl-messagepack-rpc)
-  :serial t
-  :components ((:file "src/package")
-               (:file "src/utils")
-               (:file "src/cl-neovim")
-               (:file "src/repl")
-               (:file "src/vim-utils")
-               (:file "src/callbacks")
-               (:file "src/interface")
-               (:file "src/api")
-               )
+  :serial T
+  :components ((:module "src"
+                :components ((:file "package")
+                             (:file "utils")
+                             (:file "vim-utils")
+                             (:file "cl-neovim")
+                             (:file "repl")
+                             (:file "callbacks")
+                             (:file "interface")
+                             (:file "api"))))
   :in-order-to ((test-op (test-op cl-neovim-tests))))
