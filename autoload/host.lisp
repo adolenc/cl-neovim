@@ -43,4 +43,8 @@
 
 (setf nvim::*using-host* T
       nvim::*log-stream* (make-broadcast-stream))
-(mrpc::run-forever (mrpc::event-loop nvim::*nvim-instance*))
+(handler-case (mrpc::run-forever (mrpc::event-loop nvim::*nvim-instance*))
+  (T (desc)
+    (format nvim::*log-stream* "Event loop received error:~%~A~%Closing lisp host.~%" desc) 
+    (force-output nvim::*log-stream*)
+    (close nvim::*log-stream*)))
