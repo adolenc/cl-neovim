@@ -19,9 +19,12 @@
 (defun load-plugin (path)
   (let ((nvim::*specs* '())
         (nvim::*path* path))
-    (load path)
-    (unless (assoc path *loaded-plugin-specs* :test #'equal)
-      (push (cons path nvim::*specs*) *loaded-plugin-specs*))))
+    (handler-case (progn (load path)
+                         (unless (assoc path *loaded-plugin-specs* :test #'equal)
+                           (push (cons path nvim::*specs*) *loaded-plugin-specs*)))
+      (T (desc)
+         (format t "Failed to load plugin `~A':~%~A" path desc)
+         (nvim:command (format nil "echom 'Failed to load lisp plugin ~A:~%~A'" path desc))))))
 
 (def-nvim-mrpc-cb "specs" (path)
   ; Either the plugin was already loaded in which case the specs should be available, or we need to load it
