@@ -13,10 +13,13 @@
                          Tabpage)))
 (defvar *nvim-instance* NIL "Binds to the last connection to neovim")
 
+(defclass nvim (mrpc:client)
+  ((client-id :initform NIL :accessor client-id)))
+
 
 (cl:defun connect (&rest args &key host port file)
   (let ((mrpc:*extended-types* *nvim-types*))
-    (setf *nvim-instance* (apply #'make-instance 'mrpc:client args))))
+    (setf *nvim-instance* (apply #'make-instance 'nvim args))))
 
 (cl:defun listen-once (&optional (instance *nvim-instance*))
   "Block execution listening for a new message for instance."
