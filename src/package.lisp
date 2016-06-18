@@ -11,7 +11,8 @@
            #:connect)
 
   ;;; cl-neovim.lisp
-  (:export #:connect
+  (:export #:*nvim-instance*
+           #:connect
            #:listen-once
            #:call/s
            #:call/a)

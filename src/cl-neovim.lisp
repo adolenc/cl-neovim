@@ -25,13 +25,18 @@
   "Block execution listening for a new message for instance."
   (mrpc::run-once (mrpc::event-loop instance)))
 
-(cl:defun call/s (command &rest args)
-  "Send nvim command to neovim socket and return the result."
-  (let ((mrpc:*extended-types* *nvim-types*))
-    (apply #'mrpc:request *nvim-instance* command args)))
+(cl:defun %call (instance fn-type command &rest args)
+  (let ((mrpc:*extended-types* *nvim-types*)
+        (instance (etypecase instance
+                    ((member t) *nvim-instance*)
+                    (nvim instance))))
+    (apply fn-type instance command args)))
 
-(cl:defun call/a (command &rest args)
+(cl:defun call/s (instance command &rest args)
+  "Send nvim command to neovim socket and return the result."
+  (apply #'%call instance #'mrpc:request command args))
+
+(cl:defun call/a (instance command &rest args)
   "Send nvim command to neovim socket asynchronously, returning the control
 back to the caller immediately and discarding all return values/errors."
-  (let ((mrpc:*extended-types* *nvim-types*))
-    (apply #'mrpc:notify *nvim-instance* command args)))
+  (apply #'%call instance #'mrpc:notify command args))
