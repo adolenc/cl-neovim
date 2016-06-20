@@ -14,8 +14,13 @@
 (defvar *nvim-instance* NIL "Binds to the last connection to neovim")
 
 (defclass nvim (mrpc:client)
-  ((client-id :initform NIL :accessor client-id)))
+  ((client-id :initform NIL :reader client-id)))
 
+
+(defmethod client-id :before ((instance nvim))
+  (with-slots (client-id) instance
+    (unless client-id
+      (setf client-id (first (call/s instance "vim_get_api_info"))))))
 
 (cl:defun connect (&rest args &key host port file)
   (let ((mrpc:*extended-types* *nvim-types*))

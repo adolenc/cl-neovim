@@ -3,8 +3,6 @@
 
 (cl:defun register-repl (instance)
   "Register repl with the running neovim instance."
-  (unless (client-id instance)
-    (setf (client-id instance) (first (call/s instance "vim_get_api_info"))))
   (call/s instance "vim_call_function" "lisp#RegisterRepl" (list (client-id instance))))
 
 (cl:defun register-repl-callback (instance spec)
