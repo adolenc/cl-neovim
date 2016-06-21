@@ -85,7 +85,7 @@
                (spec (gensym))
                (r (gensym)))
           `(progn
-             (let ((,spec (plist->string-hash (list :sync ,(if sync 1 0)
+             (let ((,spec (plist->string-hash (list :sync ,(or sync :false)
                                                    :name ,name
                                                    :type ,type
                                                    :opts (plist->string-hash ',spec-opts)))))
