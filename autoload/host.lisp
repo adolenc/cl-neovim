@@ -21,8 +21,13 @@
         (nvim::*path* path))
     (handler-case (progn (load path)
                          (unless (assoc path *loaded-plugin-specs* :test #'equal)
-                           (push (cons path nvim::*specs*) *loaded-plugin-specs*)))
-      (T (desc)
+                           (let ((spec (remove-duplicates nvim::*specs*  ; we need to remove all duplicate definitions except the last one
+                                                          :from-end T
+                                                          :test #'(lambda (def-1 def-2)
+                                                                    (if (string= (gethash "type" def-1) (gethash "type" def-2))
+                                                                      (string= (gethash "name" def-1) (gethash "name" def-2)))))))
+                             (push (cons path spec) *loaded-plugin-specs*))))
+      (error (desc)
          (format t "Failed to load plugin `~A':~%~A" path desc)
          (nvim:command (format nil "echom 'Failed to load lisp plugin ~A:~%~A'" path desc))))))
 
