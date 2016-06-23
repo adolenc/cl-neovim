@@ -7,7 +7,8 @@
   :serial T
   :components ((:module "t"
                 :components ((:file "package")
-                             (:file "setup"))))
+                             (:file "setup")
+                             (:file "callbacks"))))
   :perform (test-op (op c)
              (uiop:symbol-call '#:fiveam '#:run!
                                (uiop:find-symbol* '#:neovim-test-suite :cl-neovim-tests))))
