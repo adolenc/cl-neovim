@@ -1,14 +1,14 @@
-(ql:quickload :cl-neovim-tests :silent T)
+(ql:quickload :cl-neovim-tests)
 (in-package :cl-neovim-tests)
 (in-suite neovim-test-suite)
 
 
-(nvim:defun/s lisp-host-test-1 ()
-  "test1")
+; Show the progress of testing in neovim's statusline
+(defmethod fiveam::%run :before ((suite fiveam::test-suite))
+  (nvim:command (format nil "redraw | echo 'Lisp Host: running suite ~A'" (fiveam::name suite))))
 
-(test test-2
-  (is (equal (format nil "~Ctest1" #\Newline)
-             (nvim:command-output "echo LispHostTest1()"))))
+(defmethod fiveam::%run :before ((test fiveam::test-case))
+  (nvim:command (format nil "redraw | echo 'Lisp Host: running ~A'" (fiveam::name test))))
 
 
 (nvim:defcommand/s lisp-host-run-tests (&rest args)
