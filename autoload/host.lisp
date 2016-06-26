@@ -47,6 +47,10 @@
 
 (def-nvim-mrpc-cb "LoadPlugins" (plugins)
   (nvim::redirect-output (nvim::*log-stream*)
+    (dolist (plugin-file-path plugins)
+      (let ((plugin-path (subseq plugin-file-path 0 (search "rplugin/lisp/" plugin-file-path))))
+        (push plugin-path asdf:*central-registry*)))
+    (ql:register-local-projects)
     (map NIL #'load-plugin plugins)))
 
 (setf nvim::*using-host* T
