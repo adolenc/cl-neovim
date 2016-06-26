@@ -6,7 +6,7 @@
 
 (defvar *specs* NIL "A list of all the specs nvim needs.")
 (defvar *path* "" "Variable that gets set to path to plugin.")
-(defvar *nvim-types* (mrpc:define-extension-types
+(defvar *nvim-types* (mrpc::define-extension-types
                        '(0
                          Buffer
                          Window
