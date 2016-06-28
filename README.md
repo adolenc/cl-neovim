@@ -10,7 +10,7 @@ The simplest way to install the package is to use [Quicklisp](https://www.quickl
 
     $ git clone https://github.com/adolenc/cl-neovim ~/quicklisp/local-projects/cl-neovim/
 
-You will also need `sbcl` (though, as specified later, you can also use other implementations) and `libuv1-dev` binaries which you should be able to install with your package manager.
+You will also need `sbcl` (though, as specified later, you can also use other implementations) and `libuv1-dev`, which you should be able to install with your package manager.
 
 After that, evaluate
 
@@ -27,7 +27,7 @@ into your init.vim and run `:PlugInstall` from within Neovim.
 
 In case you would like to install the host manually, you need to copy `autoload/` and `plugin/` folders into your `.config/nvim/` folder.
 
-Sbcl is used as the default Lisp implementation and plugin writers should try and make sure their plugins work with it. While this is probably not a good idea for many reasons, you can make host (and subsequently all the lisp plugins you have installed) use your favourite implementation by setting `g:lisp_host_prog` variable in your `.nvimrc` to a list of `[{cmd}[, {args}...]]`. For it to work properly, command should start the implementation, load `"$LISP_HOST"` file ([autoload/host.lisp](autoload/host.lisp)), and not write anything to standard input/output by itself (e.g. for sbcl this would look like `let g:lisp_host_prog = ["sbcl", "--script", "$LISP_HOST"]`).
+Sbcl is used as the default Lisp implementation and plugin writers should try and make sure their plugins work with it. While this is probably not a good idea for many reasons, you can make host (and subsequently all the lisp plugins you have installed) use your favourite implementation by setting `g:lisp_host_prog` variable in your init.vim to a list of `[{cmd}[, {args}...]]`. For it to work properly, command should start the implementation, load `"$LISP_HOST"` file ([autoload/host.lisp](autoload/host.lisp)), and not write anything to standard input/output by itself (e.g. for sbcl this would look like `let g:lisp_host_prog = ["sbcl", "--script", "$LISP_HOST"]`).
 
 ## Using the package
 To use the package from the REPL, first run Neovim and make it listen to some address like so:
@@ -43,10 +43,10 @@ start your Sbcl REPL and enter:
 which should display "Hello from Common Lisp!" into your Neovim's prompt.
 
 ## Example plugins
-cl-neovim looks for lisp plugins inside `/rplugin/lisp/` directory. Note that simply loading plugins in your init.vim is not enough -- the first time around (and every time your callback specifications change) you will need to run `:UpdateRemotePlugins` from within Neovim to register the plugins.
+cl-neovim looks for lisp plugins inside `$VIMRUNTIME/rplugin/lisp/` directory. Note that simply loading plugins in your init.vim is not enough -- the first time around (and every time your callback specifications change) you will need to run `:UpdateRemotePlugins` from within Neovim to register the plugins.
 
 #### Simple plugin
-The following is a (slightly convoluted) translation of python example from [:h remote-plugin-example](http://neovim.io/doc/user/remote_plugin.html#remote-plugin-example); simply put it in `rplugin/lisp/sample-plugin.lisp`:
+The following is a (slightly convoluted) translation of python example from [:h remote-plugin-example](http://neovim.io/doc/user/remote_plugin.html#remote-plugin-example); simply put it in `$VIMRUNTIME/rplugin/lisp/sample-plugin.lisp`:
 ```common-lisp
 (defpackage #:sample-plugin
   (:use #:cl #:cl-neovim)
@@ -109,36 +109,38 @@ For plugins that require a more serious structure, cl-neovim registers `.asd` fi
 ```
 
 ## Tips for writing plugins
-cl-neovim is slightly different from most other Neovim plugin hosts in that it takes the advantage of being able to run and test code in the REPL. So, while you can simply write plugins by constantly restarting Neovim (and calling `:UpdateRemotePlugins` when necessary), you can be much more efficient by:
+cl-neovim is slightly different from most other Neovim client libraries in that it allows the developer to use the full power of REPL to continuously run and test code; including callbacks. So, while you can simply write plugins by constantly restarting Neovim (and calling `:UpdateRemotePlugins` when necessary), you can be much more efficient by:
 - starting Neovim with `NVIM_LISTEN_ADDRESS` specified: `$ NVIM_LISTEN_ADDRESS=/tmp/nvim nvim`;
 - connecting to it via REPL: `* (nvim:connect :file "/tmp/nvim")`; and
 - writing your plugins as you would write other lisp programs by constantly evaluating your subprograms in REPL.
 
-Note that you can evaluate the callbacks in the REPL as well and they will get registered with the connected Neovim instance. In order to test them, you can trigger them in Neovim and then use `(nvim:listen-once)` in REPL to listen to messages from Neovim. E.g. for the `sample-callback` we specified [above](#a-more-serious-plugin), you would evaluate the `(nvim:defcommand sample-callback ...` form in the REPL, run `:SampleCallback` from Neovim and evaluate `(listen-once)` in the REPL, after which line under cursor in Neovim should change to "Hi nvim!".
+Evaluating the callbacks in the REPL will get them registered with the connected Neovim instance, and in order to test them, you can trigger them in Neovim and then use `(nvim:listen-once)` in REPL to listen to messages from Neovim. E.g. for the `sample-callback` we specified [above](#a-more-serious-plugin), you would evaluate the `(nvim:defcommand sample-callback ...)` form in the REPL, run `:SampleCallback` from Neovim and evaluate `(listen-once)` in the REPL, after which line under cursor in Neovim should change to "Hi nvim!".
 
 Because `(listen-once)` is slightly more work than one would like, I suggest you trigger the callback from the REPL itself -- that is by calling `(nvim:command "SampleCallback")`, which runs `listen-once` for you behind the scenes.
 
-Only 'printf' debugging is truly supported: printing to standard output from the REPL properly prints to the output, but hides it when plugin is ran using plugin host; unless Neovim is started with `$NVIM_LISP_LOG_FILE` set to some file into which all output is redirected. Note that while plugin host should properly close the file when Neovim shuts down, if it for whatever reason fails to do so (or if you want instant updates to log file), simply use `(force-output)` after printing, so you don't lose buffered output.
+Only 'printf' debugging is truly supported: printing to standard output from the REPL properly prints to the output, but hides it when plugin is ran using plugin host; that is unless Neovim is started with `$NVIM_LISP_LOG_FILE` set, in which case all the output is redirected to that file. Note that while plugin host should properly close the file when Neovim shuts down, if it for whatever reason fails to do so (or if you want instant updates to log file), simply use `(force-output)` after printing, so you don't lose buffered output.
 
 ## Exported symbols
-We have already seen `#'connect` multiple times in this README, but what I didn't tell you is that you can connect to Neovim via named pipe, or via tcp address if you specify `:host` and `:port` arguments. Function also binds the connection to the `*nvim-instance*` and returns an instance of `nvim` class, which you can optionally pass as the final argument to all functions in case you want to connect to multiple instances of Neovim at once.
+cl-neovim allows you to connect to Neovim using either named pipes via `#'connect` and it's `:file` parameter, or using tcp address if you specify `:host` and `:port` arguments instead. Function also binds the connection to the `*nvim-instance*` variable and returns an instance of `nvim` class, which you can optionally pass as the final argument to all of the functions [below](#neovims-api) in case you want to connect to multiple instances of Neovim at once.
 
-#### Neovim's exported API
+#### Neovim's API
 Package basically exports every function exposed by Neovim's api. You can find the full listing in [package.lisp](src/package.lisp).
 
-If you are familiar with the api Neovim exposes, some things here are renamed for nicer interface. Specifically:
+If you are familiar with the api Neovim exposes, some things in cl-neovim are renamed for nicer interface. Specifically:
 - underscores are replaced with hyphens;
-- names starting with `vim_` have that prefix removed (except for `vim_eval`);
+- names starting with `vim_` have that prefix removed;
 - `get_` and `set_` are removed from names.
 
 For instance, `vim_get_current_line` is now just `current-line` and `buffer_get_line` becomes `buffer-line`.
 
 Setter functions (those with `set` in their names) are implemented as inversions of their respective `get` counterparts via `setf` macro. So, to set current line to "some new line", you would use `(setf (nvim:current-line) "some new line")`.
 
-By default all the calls are synchronous, meaning they block the execution of the thread until neovim returns the result. You can optionally use asynchronous versions by appending `/a` to the name; these calls won't block the thread, but they also ignore all the errors and return values. If you for whatever reason want to be more explicit, you can also append `/s` to the names, but these functions are in all aspects equivalent to those without `/s`.
+By default all the calls are synchronous, meaning they block the execution of the thread until Neovim returns the result. You can optionally use asynchronous versions by appending `/a` to the name; these calls won't block the thread, but they also ignore all the errors and return values. If you for whatever reason want to be more explicit, you can also append `/s` to the names, but these functions are in all aspects equivalent to those without `/s`.
+
+If you for whatever reason want to manually call Neovim api functions (that is, by string), you can use `#'call/s` and `#'call/a` for synchronous and asynchronous calls respectively, where the first argument of either call is either a instance of `nvim` class that gets returned by `#'connect`, or `t` (and, equivalently, `*nvim-instance*`) for last connected instance.
 
 #### Callbacks
-Callbacks for neovim are of the form:
+Callbacks for Neovim are of the form:
 ````
 callback-type name (args) documentation declare-opts? form*
 
