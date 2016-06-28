@@ -24,12 +24,12 @@
                            (let ((spec (remove-duplicates nvim::*specs*  ; we need to remove all duplicate definitions except the last one
                                                           :from-end T
                                                           :test #'(lambda (def-1 def-2)
-                                                                    (if (string= (gethash "type" def-1) (gethash "type" def-2))
-                                                                      (string= (gethash "name" def-1) (gethash "name" def-2)))))))
+                                                                    (and (string= (gethash "type" def-1) (gethash "type" def-2))
+                                                                         (string= (gethash "name" def-1) (gethash "name" def-2)))))))
                              (push (cons path spec) *loaded-plugin-specs*))))
       (error (desc)
          (format t "Failed to load plugin `~A':~%~A" path desc)
-         (nvim:command (format nil "echom 'Failed to load lisp plugin ~A:~%~A'" path desc))))))
+         (nvim:command (format nil "echo 'Failed to load lisp plugin ~A:~%~A'" path desc))))))
 
 (def-nvim-mrpc-cb "specs" (path)
   ; Either the plugin was already loaded in which case the specs should be available, or we need to load it
