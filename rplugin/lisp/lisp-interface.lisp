@@ -1,19 +1,24 @@
 (in-package :cl-user)
 
-(ql:quickload :arrow-macros)
 (defpackage #:lisp-interface
-  (:use #:cl #:cl-neovim #:arrow-macros)
+  (:use #:cl #:cl-neovim)
   (:shadowing-import-from #:cl #:defun #:eval))
 (in-package :lisp-interface)
 
+
+(defmacro echo-output (&body forms)
+  (let ((output (gensym)))
+    `(let ((,output (with-output-to-string (*standard-output*)
+                     ,@forms)))
+       (nvim:command (format nil "echo '~A'" ,output)))))
+
+(defun eval-string (str)
+  (eval (read-from-string str)))
+
+
 (nvim:defcommand/s lisp (&rest form)
   (declare (opts nargs))
-  (let ((output (with-output-to-string (*standard-output*)
-                  (->> form  ; == '("(+" "1" "2)")
-                    (format nil "~{~A~^ ~}")
-                    read-from-string
-                    eval))))
-    (nvim:command (format nil "echo '~A'" output))))
+  (echo-output (eval-string (format nil "~{~A~^ ~}" form))))
 
 
 (in-package :cl-user)
