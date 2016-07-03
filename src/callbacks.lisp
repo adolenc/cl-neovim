@@ -78,29 +78,27 @@
         (let* ((name (if (stringp name) name (symbol->vim-name name)))
                (raw-declare-opts (rest (assoc 'opts (cdar declarations) :test #'symbol-name=)))
                (declare-opts (fill-declare-opts raw-declare-opts))
-               (in-host (and (boundp *using-host*) *using-host*))
                (arglist (generate-arglist args arglist-opts declare-opts nvim-opts))
-               (spec-opts (generate-specs declare-opts type))
-               (callback-name (generate-callback-name type name spec-opts))
-               (spec (gensym))
-               (r (gensym)))
-          `(progn
-             (let ((,spec (plist->string-hash (list :sync ,(or sync :false)
-                                                   :name ,name
-                                                   :type ,type
-                                                   :opts (plist->string-hash ',spec-opts)))))
-               (if ,in-host
-                 (push ,spec *specs*)
-                 (progn (register-repl *nvim-instance*)
-                        (register-repl-callback *nvim-instance* ,spec)))
-               (mrpc:register-callback
-                 *nvim-instance*
-                 ,callback-name
-                 #'(lambda (&rest ,r)
-                     ,docstring
-                     (destructuring-bind ,arglist ,r
-                       (redirect-output (*log-stream*)
-                         ,@forms)))))))))))
+               (spec-opts (generate-specs declare-opts type)))
+          (alexandria:with-gensyms (callback-name spec r)
+            `(eval-when (:compile-toplevel :load-toplevel :execute)
+                 (let ((,spec (plist->string-hash (list :sync ,(or sync :false)
+                                                        :name ,name
+                                                        :type ,type
+                                                        :opts (plist->string-hash ',spec-opts))))
+                       (,callback-name (generate-callback-name ,type ,name ',spec-opts)))
+                   (push ,spec *specs*)
+                   (unless (and (boundp *using-host*) *using-host*)
+                     (progn (register-repl *nvim-instance*)
+                            (register-repl-callback *nvim-instance* ,spec)))
+                   (mrpc:register-callback
+                     *nvim-instance*
+                     ,callback-name
+                     #'(lambda (&rest ,r)
+                         ,docstring
+                         (destructuring-bind ,arglist ,r
+                           (redirect-output (*log-stream*)
+                             ,@forms))))))))))))
 
 (defmacro defcommand (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
