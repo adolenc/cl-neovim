@@ -77,9 +77,6 @@
   (set-result-in-nvim "first fun"))
 
 (test registering-duplicate-callbacks
-  (is (equal "second cmd" (progn (nvim:command "LispHostTestSameCallbackName")
-                                 (get-result-from-nvim))))
+  (is (equal "second cmd" (result-from-nvim/s (nvim:command "LispHostTestSameCallbackName"))))
   (signals mrpc:rpc-error (nvim:command "LispHostTestSameCallbackName!"))
-  (is (equal "first fun" (progn (nvim:call-function "LispHostTestSameCallbackName" #())
-                                (get-result-from-nvim)))))
-
+  (is (equal "first fun" (result-from-nvim/s (nvim:call-function "LispHostTestSameCallbackName" #())))))

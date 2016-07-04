@@ -11,3 +11,17 @@
 
 (defun set-result-in-nvim (result &optional (var-name "lisp_host_test_tmp_result"))
   (setf (nvim:var var-name) result))
+
+(defmacro result-from-nvim/s (&body body)
+  `(progn
+     ,@body
+     (get-result-from-nvim)))
+
+(defmacro result-from-nvim/a (&body body)
+  `(progn
+     (set-result-in-nvim "result not set")
+     ,@body
+     (loop for result = (get-result-from-nvim) then (get-result-from-nvim)
+           while (and (stringp result) (string= result "result not set"))
+           do (sleep 0.01)
+           finally (return result))))
