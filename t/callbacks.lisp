@@ -147,11 +147,11 @@
   (declare (opts (pattern "*.lisp_host_testa") (vim-eval "expand(\"<afile>\")")))
   (set-result-in-nvim filename))
 
-(nvim:defautocmd buf-enter (filename)
+(nvim:defautocmd/s buf-enter (filename)
   (declare (opts (pattern "*.lisp_host_tests") (vim-eval "expand(\"<afile>\")")))
   (set-result-in-nvim filename))
 
-(test triggering-autocmd-callbacks
+(test autocmd-callbacks
   (set-result-in-nvim NIL)
   (is (equal "test.lisp_host_testa"
              (result-from-nvim/a (nvim:command "e test.lisp_host_testa"))))
