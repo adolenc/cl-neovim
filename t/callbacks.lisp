@@ -82,6 +82,67 @@
   (is (equal "first fun" (result-from-nvim/s (nvim:call-function "LispHostTestSameCallbackName" #())))))
 
 
+(defmacro generate-command-callbacks (callback-prefix opts)
+  `(progn
+     ,@(loop for use-shortnames in '(NIL T) append
+             (loop for randomize-opts-order in '(NIL T) collect
+                   (let ((opts (if use-shortnames opts (mapcar #'first opts)))
+                         (declares (mapcar #'first opts))
+                         (callback-name (concatenate 'string callback-prefix
+                                                     (if use-shortnames "Short" "Long")
+                                                     (if randomize-opts-order "Rand" "Determ")))
+                         (return-opts (mapcar (if use-shortnames #'second #'first) opts)))
+                     `(nvim:defcommand/s ,callback-name (a b &rest args &opts ,@(if randomize-opts-order
+                                                                                  (alexandria:shuffle (alexandria:copy-sequence 'list opts))
+                                                                                  opts))
+                        (declare (opts nargs ,@(substitute '(vim-eval "line(\".\")") 'vim-eval declares)))
+                        (set-result-in-nvim (list (list a b args) ,@return-opts))
+                        T))))))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (generate-command-callbacks "LispHostCommandCount" ((count co) (bang bn) (register re) (vim-eval line-nr)))
+  (generate-command-callbacks "LispHostCommandRange" ((range ra) (bang bn) (register re) (vim-eval line-nr))))
+
+(nvim:defcommand/s lisp-host-command-no-arglist-opts (&rest args)
+  (declare (opts range bang bar nargs (complete "file") (vim-eval "line(\".\")-1")))
+  (set-result-in-nvim args))
+
+(nvim:defcommand/s lisp-host-command-no-arglist ()
+  (declare (opts nargs))
+  (set-result-in-nvim "called!"))
+
+(test command-callbacks
+  (setf (nvim:buffer-line-slice (nvim:current-buffer) 0 -1 T T) '("abc" "def" "ghi" "jkl"))
+  (is (equal '(("a1" "a2" ("a3" "a4")) (2 3) 0 "r" 1) (result-from-nvim/s (nvim:command "2,3LispHostCommandRangeLongDeterm r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) (2 3) 0 "r" 1) (result-from-nvim/s (nvim:command "2,3LispHostCommandRangeLongRand r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) (2 3) 0 "r" 1) (result-from-nvim/s (nvim:command "2,3LispHostCommandRangeShortDeterm r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) (2 3) 0 "r" 1) (result-from-nvim/s (nvim:command "2,3LispHostCommandRangeShortRand r a1 a2 a3 a4"))))
+  (nvim:input "j")
+  (is (equal '(("a1" "a2" ("a3" "a4")) (2 4) 1 "r" 2) (result-from-nvim/s (nvim:command ".,$LispHostCommandRangeLongDeterm! r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) (2 4) 1 "r" 2) (result-from-nvim/s (nvim:command ".,$LispHostCommandRangeLongRand! r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) (2 4) 1 "r" 2) (result-from-nvim/s (nvim:command ".,$LispHostCommandRangeShortDeterm! r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) (2 4) 1 "r" 2) (result-from-nvim/s (nvim:command ".,$LispHostCommandRangeShortRand! r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "LispHostCommandRangeLongDeterm! r a1 a2"))))
+  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "LispHostCommandRangeLongRand! r a1 a2"))))
+  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "LispHostCommandRangeShortDeterm! r a1 a2"))))
+  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "LispHostCommandRangeShortRand! r a1 a2"))))
+  (nvim:input "gg")
+  (is (equal '(("a1" "a2" ("a3" "a4")) 10 0 "r" 1) (result-from-nvim/s (nvim:command "10LispHostCommandCountLongDeterm r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) 10 0 "r" 1) (result-from-nvim/s (nvim:command "10LispHostCommandCountLongRand r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) 10 0 "r" 1) (result-from-nvim/s (nvim:command "10LispHostCommandCountShortDeterm r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) 10 0 "r" 1) (result-from-nvim/s (nvim:command "10LispHostCommandCountShortRand r a1 a2 a3 a4"))))
+  (nvim:input "j")
+  (is (equal '(("a1" "a2" ("a3" "a4")) 10 1 "r" 2) (result-from-nvim/s (nvim:command "10LispHostCommandCountLongDeterm! r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) 10 1 "r" 2) (result-from-nvim/s (nvim:command "10LispHostCommandCountLongRand! r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) 10 1 "r" 2) (result-from-nvim/s (nvim:command "10LispHostCommandCountShortDeterm! r a1 a2 a3 a4"))))
+  (is (equal '(("a1" "a2" ("a3" "a4")) 10 1 "r" 2) (result-from-nvim/s (nvim:command "10LispHostCommandCountShortRand! r a1 a2 a3 a4"))))
+  (is (equal '("a1" "a2" "a3" "a4") (result-from-nvim/s (nvim:command "LispHostCommandNoArglistOpts a1 a2 a3 a4"))))
+  (is (equal "called!" (result-from-nvim/s (nvim:command "LispHostCommandNoArglist"))))
+  (signals mrpc:rpc-error (nvim:command "LispHostCommandNoArglist!"))
+  (signals mrpc:rpc-error (nvim:command "3,4LispHostCommandNoArglist"))
+  (setf (nvim:buffer-line-slice (nvim:current-buffer) 0 -1 T T) '("")))
+
+
 (nvim:defautocmd buf-enter (filename)
   (declare (opts (pattern "*.lisp_host_testa") (vim-eval "expand(\"<afile>\")")))
   (set-result-in-nvim filename))
