@@ -80,3 +80,23 @@
   (is (equal "second cmd" (result-from-nvim/s (nvim:command "LispHostTestSameCallbackName"))))
   (signals mrpc:rpc-error (nvim:command "LispHostTestSameCallbackName!"))
   (is (equal "first fun" (result-from-nvim/s (nvim:call-function "LispHostTestSameCallbackName" #())))))
+
+
+(nvim:defautocmd buf-enter (filename)
+  (declare (opts (pattern "*.lisp_host_testa") (vim-eval "expand(\"<afile>\")")))
+  (set-result-in-nvim filename))
+
+(nvim:defautocmd buf-enter (filename)
+  (declare (opts (pattern "*.lisp_host_tests") (vim-eval "expand(\"<afile>\")")))
+  (set-result-in-nvim filename))
+
+(test triggering-autocmd-callbacks
+  (set-result-in-nvim NIL)
+  (is (equal "test.lisp_host_testa"
+             (result-from-nvim/a (nvim:command "e test.lisp_host_testa"))))
+  (set-result-in-nvim NIL)
+  (is (equal "test.lisp_host_tests"
+             (result-from-nvim/s (nvim:command "e test.lisp_host_tests"))))
+  (set-result-in-nvim NIL)
+  (is (eq NIL (result-from-nvim/s (nvim:command "e test.lisp_host_test1"))))
+  (nvim:command "enew"))
