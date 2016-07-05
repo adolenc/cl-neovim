@@ -100,3 +100,33 @@
   (set-result-in-nvim NIL)
   (is (eq NIL (result-from-nvim/s (nvim:command "e test.lisp_host_test1"))))
   (nvim:command "enew"))
+
+
+(nvim:defun/s lisp-host-fun-full-opts (&rest args &opts vim-eval)
+  (declare (opts (vim-eval "line(\".\")-1")))
+  (list args vim-eval))
+
+(nvim:defun/s lisp-host-fun-altname-opts (&rest args &opts (vim-eval line-nr))
+  (declare (opts (vim-eval "line(\".\")-1")))
+  (list args line-nr))
+
+(nvim:defun/s lisp-host-fun-extra-opts (&rest args)
+  (declare (opts (vim-eval "line(\".\")-1")))
+  args)
+
+(nvim:defun/s lisp-host-fun-no-opts (&rest args)
+  args)
+
+(nvim:defun/s lisp-host-fun-args (a b &optional c d)
+  (list a b c d))
+
+(test function-callbacks
+  (is (equal '((1 2 3) 0) (nvim:call-function "LispHostFunFullOpts" '(1 2 3))))
+  (is (equal '((1 2 3) 0) (nvim:call-function "LispHostFunAltnameOpts" '(1 2 3))))
+  (is (equal '(1 2 3)     (nvim:call-function "LispHostFunExtraOpts" '(1 2 3))))
+  (is (equal '(1 2 3)     (nvim:call-function "LispHostFunNoOpts" '(1 2 3))))
+  (signals mrpc:rpc-error     (nvim:call-function "LispHostFunArgs" #()))
+  (signals mrpc:rpc-error     (nvim:call-function "LispHostFunArgs" '(1)))
+  (is (equal '(1 "2" NIL NIL) (nvim:call-function "LispHostFunArgs" '(1 "2"))))
+  (is (equal '(1 "2" 3 NIL)   (nvim:call-function "LispHostFunArgs" '(1 "2" 3))))
+  (is (equal '(1 "2" 3 (4 5)) (nvim:call-function "LispHostFunArgs" '(1 "2" 3 (4 5))))))
