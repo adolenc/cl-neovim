@@ -1,6 +1,10 @@
 (in-package #:cl-neovim)
 
 
+;; We don't want cl-messagepack to convert alists into hash-maps
+(cl:defun mpk::alistp (l)
+  NIL)
+
 (defparameter *log-stream* *standard-output*)
 (defvar *using-host* NIL "Variable that host binds to T when it loads plugins.")
 
@@ -32,6 +36,7 @@
 
 (cl:defun %call (instance fn-type command &rest args)
   (let ((mrpc:*extended-types* *nvim-types*)
+        (mrpc::*decoder-prefers-lists* T)
         (instance (etypecase instance
                     ((member t) *nvim-instance*)
                     (nvim instance))))
