@@ -34,9 +34,16 @@ endfunction
 
 function! lisp#RequireLispHost(host)
   let lisp_plugins = remote#host#PluginsForHost(a:host.name)
+  let lisp_host_test_file = '/rplugin/lisp/__lisp-host-test.lisp'
   let lisp_plugin_paths = []
   for plugin in lisp_plugins
-    call add(lisp_plugin_paths, plugin.path)
+    if plugin.path[-len(lisp_host_test_file):] ==# lisp_host_test_file
+      if exists('g:lisp_host_enable_tests') && g:lisp_host_enable_tests
+        call add(lisp_plugin_paths, plugin.path)
+      endif
+    else
+      call add(lisp_plugin_paths, plugin.path)
+    endif
   endfor
 
   let implementation_cmd = lisp#GetImplementationCmd()
