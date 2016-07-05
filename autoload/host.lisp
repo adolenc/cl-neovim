@@ -16,6 +16,15 @@
 
 (nvim:connect)
 
+(defun same-callback-p (callback1 callback2)
+  (and (string= (gethash "type" callback1) (gethash "type" callback2))
+       (string= (gethash "name" callback1) (gethash "name" callback2))
+       (if (and (string= (gethash "type" callback1) "autocmd")
+                (string= (gethash "type" callback2) "autocmd"))
+         (string= (gethash "pattern" (gethash "opts" callback1))
+                  (gethash "pattern" (gethash "opts" callback2)))
+         T)))
+
 (defun load-plugin (path)
   (let ((nvim::*specs* '())
         (nvim::*path* path))
@@ -23,9 +32,7 @@
                          (unless (assoc path *loaded-plugin-specs* :test #'equal)
                            (let ((spec (remove-duplicates nvim::*specs*  ; we need to remove all duplicate definitions except the last one
                                                           :from-end T
-                                                          :test #'(lambda (def-1 def-2)
-                                                                    (and (string= (gethash "type" def-1) (gethash "type" def-2))
-                                                                         (string= (gethash "name" def-1) (gethash "name" def-2)))))))
+                                                          :test #'same-callback-p)))
                              (push (cons path spec) *loaded-plugin-specs*))))
       (error (desc)
          (format t "Failed to load plugin `~A':~%~A" path desc)
