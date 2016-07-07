@@ -66,7 +66,10 @@
 
 (defmacro redirect-output ((&optional (where *log-stream*)) &body body)
   `(let ((*standard-output* ,where)
-         (*error-output* ,where))
+         (*trace-output* ,where)
+         (*error-output* ,where)
+         (*debug-io* ,where)
+         (*query-io* ,where))
      ,@body))
 
 (cl:defun construct-callback (type sync nvim-opts name args-and-opts body)
