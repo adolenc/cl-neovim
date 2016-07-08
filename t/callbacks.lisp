@@ -6,11 +6,11 @@
   `(let ((nvim::*specs*)
          (nvim::*using-host* T))
      ,defform
-     (cond ((and (stringp ,spec) (string= ,spec "opts"))
-              (sort (alexandria:hash-table-alist (gethash "opts" (first nvim::*specs*)))
-                    #'string< :key #'car))
-            (,spec (gethash ,spec (first nvim::*specs*)))
-            (T (first nvim::*specs*)))))
+     ,(cond ((and (stringp spec) (string= spec "opts"))
+             `(sort (alexandria:hash-table-alist (gethash "opts" (first nvim::*specs*)))
+                   #'string< :key #'car))
+            (spec `(gethash ,spec (first nvim::*specs*)))
+            (T `(first nvim::*specs*)))))
 
 (test callback-name-specs
    (is (string= "Test"           (capture-reported-spec "name" (nvim:defun test ()))))
@@ -147,20 +147,12 @@
   (declare (opts (pattern "*.lisp_host_testa") (vim-eval "expand(\"<afile>\")")))
   (set-result-in-nvim filename))
 
-(nvim:defautocmd/s buf-enter (filename)
-  (declare (opts (pattern "*.lisp_host_tests") (vim-eval "expand(\"<afile>\")")))
-  (set-result-in-nvim filename))
-
 (test autocmd-callbacks
   (set-result-in-nvim NIL)
-  (is (equal "test.lisp_host_testa"
-             (result-from-nvim/a (nvim:command "e test.lisp_host_testa"))))
+  (is (equal "test.lisp_host_testa" (result-from-nvim/a (nvim:command "e! test.lisp_host_testa"))))
   (set-result-in-nvim NIL)
-  (is (equal "test.lisp_host_tests"
-             (result-from-nvim/s (nvim:command "e test.lisp_host_tests"))))
-  (set-result-in-nvim NIL)
-  (is (eq NIL (result-from-nvim/s (nvim:command "e test.lisp_host_test1"))))
-  (nvim:command "enew"))
+  (is (eq NIL (result-from-nvim/s (nvim:command "e! test.lisp_host_test1"))))
+  (nvim:command "enew!"))
 
 
 (nvim:defun/s lisp-host-fun-full-opts (&rest args &opts vim-eval)

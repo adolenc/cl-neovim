@@ -23,5 +23,5 @@
      ,@body
      (loop for result = (get-result-from-nvim) then (get-result-from-nvim)
            while (and (stringp result) (string= result "result not set"))
-           do (sleep 0.01)
+           do (sleep 0.05)
            finally (return result))))
