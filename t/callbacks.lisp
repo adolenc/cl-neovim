@@ -40,10 +40,10 @@
    (is (equal  '(("nargs" . "*"))
                (capture-reported-spec "opts"
                  (nvim:defcommand test () (declare (opts nargs))))))
-   (is (equal '(("bang" . "") ("nargs" . "*") ("range" . "%"))
+   (is (equal '(("bang" . "") ("nargs" . "*") ("range" . ""))
                (capture-reported-spec "opts"
                  (nvim:defcommand test () (declare (opts range bang nargs))))))
-   (is (equal '(("bang" . "") ("bar" . "") ("eval" . "eval") ("nargs" . "*") ("range" . "%") ("register" . ""))
+   (is (equal '(("bang" . "") ("bar" . "") ("eval" . "eval") ("nargs" . "*") ("range" . "") ("register" . ""))
                (capture-reported-spec "opts"
                  (nvim:defcommand test () (declare (opts range bang bar nargs (vim-eval "eval") register))))))
    (is (equal '(("bang" . "") ("bar" . "") ("complete" . "file") ("count" . "") ("eval" . "eval") ("nargs" . "?") ("register" . ""))
@@ -122,10 +122,10 @@
   (is (equal '(("a1" "a2" ("a3" "a4")) (2 4) 1 "r" 2) (result-from-nvim/s (nvim:command ".,$LispHostCommandRangeLongRand! r a1 a2 a3 a4"))))
   (is (equal '(("a1" "a2" ("a3" "a4")) (2 4) 1 "r" 2) (result-from-nvim/s (nvim:command ".,$LispHostCommandRangeShortDeterm! r a1 a2 a3 a4"))))
   (is (equal '(("a1" "a2" ("a3" "a4")) (2 4) 1 "r" 2) (result-from-nvim/s (nvim:command ".,$LispHostCommandRangeShortRand! r a1 a2 a3 a4"))))
-  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "LispHostCommandRangeLongDeterm! r a1 a2"))))
-  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "LispHostCommandRangeLongRand! r a1 a2"))))
-  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "LispHostCommandRangeShortDeterm! r a1 a2"))))
-  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "LispHostCommandRangeShortRand! r a1 a2"))))
+  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "%LispHostCommandRangeLongDeterm! r a1 a2"))))
+  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "%LispHostCommandRangeLongRand! r a1 a2"))))
+  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "%LispHostCommandRangeShortDeterm! r a1 a2"))))
+  (is (equal '(("a1" "a2" ()) (1 4) 1 "r" 2) (result-from-nvim/s (nvim:command "%LispHostCommandRangeShortRand! r a1 a2"))))
   (nvim:input "gg")
   (is (equal '(("a1" "a2" ("a3" "a4")) 10 0 "r" 1) (result-from-nvim/s (nvim:command "10LispHostCommandCountLongDeterm r a1 a2 a3 a4"))))
   (is (equal '(("a1" "a2" ("a3" "a4")) 10 0 "r" 1) (result-from-nvim/s (nvim:command "10LispHostCommandCountLongRand r a1 a2 a3 a4"))))
