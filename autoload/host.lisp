@@ -4,7 +4,11 @@
   (when (probe-file quicklisp-init)
     (load quicklisp-init)))
 
-(ql:quickload :cl-neovim :silent t)
+(with-open-stream (*standard-output* (make-broadcast-stream)) ; make quicklisp quiet about fetching packages
+  (let ((*trace-output* *standard-output*)
+        (*error-output* *standard-output*)
+        (*debug-io* *standard-output*)) ; cffi is too chatty on *debug-io*
+    (ql:quickload :cl-neovim :silent T)))
 
 (defmacro def-nvim-mrpc-cb (name args &body body)
   `(mrpc::register-callback nvim::*nvim-instance* ,name
