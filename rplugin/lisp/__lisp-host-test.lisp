@@ -11,9 +11,16 @@
   (nvim:command (format nil "redraw | echo 'Lisp Host: running ~A'" (fiveam::name test))))
 
 
-(nvim:defcommand/s lisp-host-run-tests (&rest args)
-  (declare (opts (nargs "*")))
-  (let ((test-results (with-output-to-string (fiveam:*test-dribble*)
-                        (fiveam:run! 'neovim-test-suite))))
-    (nvim:command (format nil "echo '~A'" test-results))
-    args))
+(nvim:defcommand lisp-host-run-tests (&optional filename)
+  (declare (opts (nargs "?") (complete "file")))
+  (let* ((test-results (fiveam:run 'neovim-test-suite))
+         (test-details (with-output-to-string (fiveam:*test-dribble*)
+                         (fiveam:explain! test-results)))
+         (success (fiveam:results-status test-results)))
+    (format t "~&~A~%" test-details)
+    (if filename
+      (progn (if (not success)
+               (with-open-file (file filename :direction :output :if-does-not-exist :create :if-exists :overwrite)
+                 (format file "~A" test-details)))
+             (nvim:command "qa!"))
+      (nvim:command (format nil "redraw | echo 'Lisp Host: done. Results:~%~A'" test-details)))))

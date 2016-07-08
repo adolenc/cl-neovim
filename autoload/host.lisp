@@ -1,8 +1,5 @@
 #-quicklisp
-(let ((quicklisp-init (merge-pathnames "quicklisp/setup.lisp"
-                                       (user-homedir-pathname))))
-  (when (probe-file quicklisp-init)
-    (load quicklisp-init)))
+(load "~/.sbclrc")
 
 (with-open-stream (*standard-output* (make-broadcast-stream)) ; make quicklisp quiet about fetching packages
   (let ((*trace-output* *standard-output*)

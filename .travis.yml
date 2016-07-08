@@ -1,0 +1,33 @@
+language: lisp
+sudo: required
+
+cache:
+  apt: true
+  directories:
+    - $HOME/libuv-v1.9.1
+
+addons:
+  apt:
+    packages:
+      - libtool
+      - autotools-dev
+      - automake
+      - gcc-multilib
+      - g++-multilib
+
+env:
+  global:
+    - NVIM_LISTEN_ADDRESS=/tmp/nvim
+    - NVIM_LOG_FILE=/tmp/nvim_log
+    - NVIM_LISP_LOG_FILE=/tmp/nvim_lisp_log
+    - LISP=sbcl
+  matrix:
+    - TEST_TARGET=repl COVERALLS=true
+    - TEST_TARGET=host
+
+
+before_install: .ci/before_install.sh
+install:        .ci/install.sh
+before_script:  .ci/before_script.sh
+script:         .ci/script.sh
+after_script:   .ci/after_script.sh
