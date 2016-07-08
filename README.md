@@ -1,5 +1,9 @@
 cl-neovim
 =========
+[![Build Status](https://travis-ci.org/adolenc/cl-neovim.svg?branch=master)](https://travis-ci.org/adolenc/cl-neovim)
+[![Coverage Status](https://coveralls.io/repos/github/adolenc/cl-neovim/badge.svg?branch=master)](https://coveralls.io/github/adolenc/cl-neovim?branch=master)
+[![Quicklisp dist](http://quickdocs.org/badge/cl-neovim.svg)](http://quickdocs.org/cl-neovim/)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 This is a [Neovim](http://neovim.io/) client library, which can be used to write Neovim plugins using Common Lisp.
 
