@@ -59,7 +59,7 @@
                  (nvim:defautocmd test () (declare (opts (pattern "*.lisp")))))))
    (is (equal '(("eval" . "eval") ("pattern" . "*"))
                (capture-reported-spec "opts"
-                 (nvim:defautocmd test (eval-arg) (declare (opts (pattern "*") (vim-eval "eval")))))))
+                 (nvim:defautocmd test () (declare (opts (pattern "*") (vim-eval "eval")))))))
 
    (is (equal '(("eval" . "eval"))
                (capture-reported-spec "opts"

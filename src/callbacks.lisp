@@ -14,17 +14,18 @@
   "Generate argument list that will properly parse neovim's format of passed
    arguments. "
   (if (not (listp nvim-opts))
-    (fill-args-into-opts args declare-opts nvim-opts) 
+    (values (fill-args-into-opts args declare-opts nvim-opts) '())
     (let* ((args-opts (append '((nargs) (args)) (mapcar #'mklst args-opts)))
-           (nvim-opts (fill-args-into-opts args declare-opts nvim-opts)) 
+           (nvim-opts (fill-args-into-opts args declare-opts nvim-opts))
            (ordered-opts (alist-stable-intersection (mapcar #'mklst nvim-opts) (append '((nargs) (args)) declare-opts)))
+           (placeholder-gensyms)
            (ignored-opts (mapcar #'(lambda (arg)
                                      (if (> (length arg) 1)
                                        arg
-                                       (or (assoc (car arg) args-opts :test #'symbol-name=) (gensym))))
+                                       (or (assoc (car arg) args-opts :test #'symbol-name=) (car (push (gensym) placeholder-gensyms)))))
                                  ordered-opts))
            (short-arg-names (short-names ignored-opts)))
-      short-arg-names)))
+      (values short-arg-names placeholder-gensyms))))
 
 (cl:defun fill-declare-opts (declare-opts)
   "If user specified just '[opt] in declare opts, fill it out with the default
@@ -36,7 +37,7 @@
                               (assoc opt defaults :test #'symbol-name=)))
             declare-opts)))
 
-(cl:defun fill-args-into-opts (args declare-opts nvim-opts) 
+(cl:defun fill-args-into-opts (args declare-opts nvim-opts)
   "Based on the value of nargs declaration either fill in and replace nargs
    with actual user expected arguments, or ignore them, and replace args with
    actual user arguments."
@@ -81,8 +82,8 @@
         (let* ((name (if (stringp name) name (symbol->vim-name name)))
                (raw-declare-opts (rest (assoc 'opts (cdar declarations) :test #'symbol-name=)))
                (declare-opts (fill-declare-opts raw-declare-opts))
-               (arglist (generate-arglist args arglist-opts declare-opts nvim-opts))
                (spec-opts (generate-specs declare-opts type)))
+          (multiple-value-bind (arglist placeholder-gensyms) (generate-arglist args arglist-opts declare-opts nvim-opts)
           (alexandria:with-gensyms (callback-name spec r)
             `(eval-when (:compile-toplevel :load-toplevel :execute)
                  (let ((,spec (plist->string-hash (list :sync ,(or sync :false)
@@ -100,8 +101,10 @@
                      #'(lambda (&rest ,r)
                          ,docstring
                          (destructuring-bind ,arglist ,r
+                           ,(if placeholder-gensyms
+                              `(declare (ignorable ,@placeholder-gensyms)))
                            (redirect-output (*log-stream*)
-                             ,@forms))))))))))))
+                             ,@forms)))))))))))))
 
 (defmacro defcommand (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
