@@ -7,10 +7,10 @@
   (nvim:connect :file "/tmp/nvim"))
 
 (defun get-result-from-nvim (&optional (var-name "lisp_host_test_tmp_result"))
-  (nvim:var var-name))
+  (nvim:call/s t "vim_get_var" var-name))
 
 (defun set-result-in-nvim (result &optional (var-name "lisp_host_test_tmp_result"))
-  (setf (nvim:var var-name) result))
+  (nvim:call/s t "vim_set_var" var-name result))
 
 (defmacro result-from-nvim/s (&body body)
   `(progn
