@@ -65,7 +65,7 @@ The following is a (slightly convoluted) translation of python example from [:h 
     (incf *calls*)))
 
 (nvim:defcommand/s lisp-sample-cmd (&rest args &opts (range r) bang)
-  (declare (opts (nargs "*") (range "") bang (complete "file")))
+  (declare (opts (nargs "*") (complete "file")))
   (increment-calls)
   (setf (nvim:current-line) (format nil "Command: Called ~A times, args: ~A, range: ~A, bang: ~A" *calls* args r bang)))
 
@@ -165,7 +165,7 @@ declare-opt    ::= option | (option value)
  - autocmds: none (values from `vim-eval` get passed as normal arguments into lambda-list); and
  - functions: `vim-eval`.
 
-While these are full option names, you can also specify alternative names for them by wrapping them into a list of `(option alternative-name)`. Note that in order to receive these options from Neovim, you will have to specify them in `declare-opts`.
+While these are full option names, you can also specify alternative names for them by wrapping them into a list of `(option alternative-name)`.
 
 `declare-opts` is a declaration used to let Neovim know about expected behaviour of the callback and tell it which options you want it to pass along in the calls. Valid options in `declare-opt` are for:
  - commands: `nargs | complete | (range | count) | bang | register | vim-eval`;

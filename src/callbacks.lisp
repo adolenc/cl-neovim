@@ -58,6 +58,13 @@
                  opts)))
      (substitute :eval :vim-eval opts)))
 
+(cl:defun append-arglist-opts (declare-opts arglist-opts)
+  (let ((arglist-opts-names (mapcar #'(lambda (o) (or (and (listp o) (first o)) o)) arglist-opts)))
+    (remove-duplicates (append declare-opts arglist-opts-names)
+                       :test #'symbol-name=
+                       :from-end T
+                       :key #'(lambda (o) (or (and (listp o) (first o)) o)))))
+
 (cl:defun generate-callback-name (type name spec-opts)
   "Generate the callback name neovim will use when referring to this
    function/command/autocmd."
@@ -88,6 +95,7 @@
         (let* ((spec-name (if (stringp name) name (symbol->vim-name name)))
                (return-name (if (stringp name) (string-upcase name) name))
                (raw-declare-opts (rest (assoc 'opts (cdar declarations) :test #'symbol-name=)))
+               (raw-declare-opts (append-arglist-opts raw-declare-opts arglist-opts))
                (declare-opts (fill-declare-opts raw-declare-opts))
                (spec-opts (generate-specs declare-opts type))
                (return-symbol (intern (if (stringp name) return-name (symbol-name return-name)))))

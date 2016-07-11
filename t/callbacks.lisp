@@ -66,6 +66,18 @@
                  (nvim:defun test-long-name () (declare (opts (vim-eval "eval"))))))))
 
 
+(test callback-undeclared-specs
+   (is (equal '(("pattern" . "*.lisp"))
+              (capture-reported-spec "opts" (nvim:defautocmd test () (declare (opts (pattern "*.lisp")))))))
+
+   (is (equal '(("bang" . "") ("nargs" . "*") ("range" . ""))
+              (capture-reported-spec "opts" (nvim:defcommand test (&rest a &opts bang range) (declare (opts nargs))))))
+   (is (equal '(("bang" . "") ("nargs" . "*") ("range" . ""))
+              (capture-reported-spec "opts" (nvim:defcommand test (&rest a &opts (bang b) (range r)) (declare (opts nargs))))))
+   (is (equal '(("bang" . "") ("nargs" . "*") ("range" . "%") ("register" . "r"))
+              (capture-reported-spec "opts" (nvim:defcommand test (&rest a &opts register (bang b) (range r)) (declare (opts nargs (range "%") (register "r"))))))))
+
+
 (nvim:defcommand/s "LispHostTestSameCallbackName" ()
   (declare (opts bang))
   (set-result-in-nvim "first cmd"))
