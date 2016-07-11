@@ -133,9 +133,10 @@ Package basically exports every function exposed by Neovim's api. You can find t
 If you are familiar with the api Neovim exposes, some things in cl-neovim are renamed for nicer interface. Specifically:
 - underscores are replaced with hyphens;
 - names starting with `vim_` have that prefix removed;
+- predicates containing `is_` have that replaced by suffix `-p`;
 - `get_` and `set_` are removed from names.
 
-For instance, `vim_get_current_line` is now just `current-line` and `buffer_get_line` becomes `buffer-line`.
+For example, `vim_get_current_line` is now just `current-line`, `buffer_get_line` becomes `buffer-line` and `window_is_valid` is `window-valid-p`.
 
 Setter functions (those with `set` in their names) are implemented as inversions of their respective `get` counterparts via `setf` macro. So, to set current line to "some new line", you would use `(setf (nvim:current-line) "some new line")`.
 

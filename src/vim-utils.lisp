@@ -14,10 +14,15 @@
 
 (cl:defun setterp (name)
   "Is name a setter?"
-  (search "set_" name))
+  (member "set" (split-sequence #\_ name) :test #'string=))
 
-(cl:defun clean-up-name (name &optional (modifiers '("vim" "get" "set")))
+(cl:defun predicatep (name)
+  "Is name a predicate?"
+  (member "is" (split-sequence #\_ name) :test #'string=))
+
+(cl:defun clean-up-name (name &optional (modifiers '("vim" "get" "set" "is")))
   "Removes all substrings specified in modifiers from name."
   (let* ((components (split-sequence #\_ name))
-         (main-components (remove-if #'(lambda (c) (member c modifiers :test #'string=)) components)))
-    (format nil "~{~A~^_~}" main-components)))
+         (main-components (remove-if #'(lambda (c) (member c modifiers :test #'string=)) components))
+         (suffix (if (predicatep name) "_p" "")))
+    (format nil "~{~A~^_~}~A" main-components suffix)))

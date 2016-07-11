@@ -26,7 +26,7 @@
            #:buffer-clear-highlight #:buffer-clear-highlight/s #:buffer-clear-highlight/a
            #:buffer-del-line        #:buffer-del-line/s        #:buffer-del-line/a
            #:buffer-insert          #:buffer-insert/s          #:buffer-insert/a
-           #:buffer-is-valid        #:buffer-is-valid/s        #:buffer-is-valid/a
+           #:buffer-valid-p         #:buffer-valid-p/s         #:buffer-valid-p/a
            #:buffer-line            #:buffer-line/s            #:buffer-line/a
            #:buffer-line-count      #:buffer-line-count/s      #:buffer-line-count/a
            #:buffer-lines           #:buffer-lines/s           #:buffer-lines/a
@@ -59,7 +59,7 @@
            #:report-error           #:report-error/s           #:report-error/a
            #:strwidth               #:strwidth/s               #:strwidth/a
            #:subscribe              #:subscribe/s              #:subscribe/a
-           #:tabpage-is-valid       #:tabpage-is-valid/s       #:tabpage-is-valid/a
+           #:tabpage-valid-p        #:tabpage-valid-p/s        #:tabpage-valid-p/a
            #:tabpages               #:tabpages/s               #:tabpages/a
            #:tabpage-var            #:tabpage-var/s            #:tabpage-var/a
            #:tabpage-windows        #:tabpage-windows/s        #:tabpage-windows/a
@@ -70,7 +70,7 @@
            #:window-buffer          #:window-buffer/s          #:window-buffer/a
            #:window-cursor          #:window-cursor/s          #:window-cursor/a
            #:window-height          #:window-height/s          #:window-height/a
-           #:window-is-valid        #:window-is-valid/s        #:window-is-valid/a
+           #:window-valid-p         #:window-valid-p/s         #:window-valid-p/a
            #:window-option          #:window-option/s          #:window-option/a
            #:window-position        #:window-position/s        #:window-position/a
            #:windows                #:windows/s                #:windows/a
