@@ -173,6 +173,18 @@
 (nvim:defun/s lisp-host-fun-args (a b &optional c d)
   (list a b c d))
 
+(nvim:defun/s lisp-host-fun-sym-returns (when)
+  (cond ((= when 0) (return-from lisp-host-fun-sym-returns))
+        ((= when 1) (return-from lisp-host-fun-sym-returns 0))
+        ((= when 2) (block NIL (return-from lisp-host-fun-sym-returns "returned") "fail")))
+  T)
+
+(nvim:defun/s "LispHostFunStrReturns" (when)
+  (cond ((= when 0) (return-from lisphostfunstrreturns))
+        ((= when 1) (return-from lisphostfunstrreturns 0))
+        ((= when 2) (block NIL (return-from lisphostfunstrreturns "returned") "fail")))
+  T)
+
 (test function-callbacks
   (is (equal '((1 2 3) 0) (nvim:call/s t "vim_call_function" "LispHostFunFullOpts" '(1 2 3))))
   (is (equal '((1 2 3) 0) (nvim:call/s t "vim_call_function" "LispHostFunAltnameOpts" '(1 2 3))))
@@ -182,4 +194,11 @@
   (signals mrpc:rpc-error     (nvim:call/s t "vim_call_function" "LispHostFunArgs" '(1)))
   (is (equal '(1 "2" NIL NIL) (nvim:call/s t "vim_call_function" "LispHostFunArgs" '(1 "2"))))
   (is (equal '(1 "2" 3 NIL)   (nvim:call/s t "vim_call_function" "LispHostFunArgs" '(1 "2" 3))))
-  (is (equal '(1 "2" 3 (4 5)) (nvim:call/s t "vim_call_function" "LispHostFunArgs" '(1 "2" 3 (4 5))))))
+  (is (equal '(1 "2" 3 (4 5)) (nvim:call/s t "vim_call_function" "LispHostFunArgs" '(1 "2" 3 (4 5)))))
+  (is (null (nvim:call/s t "vim_call_function" "LispHostFunSymReturns" '(0))))
+  (is (= 0 (nvim:call/s t "vim_call_function" "LispHostFunSymReturns" '(1))))
+  (is (string= "returned" (nvim:call/s t "vim_call_function" "LispHostFunSymReturns" '(2))))
+  (is-true (nvim:call/s t "vim_call_function" "LispHostFunSymReturns" '(-1)))
+  (is (null (nvim:call/s t "vim_call_function" "LispHostFunStrReturns" '(0))))
+  (is (= 0 (nvim:call/s t "vim_call_function" "LispHostFunStrReturns" '(1))))
+  (is (string= "returned" (nvim:call/s t "vim_call_function" "LispHostFunStrReturns" '(2)))))

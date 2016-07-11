@@ -85,10 +85,12 @@
   (let ((fake-lambda-form `(defun ,name ,args-and-opts ,@body)))
     (form-fiddle:with-destructured-lambda-form (:docstring docstring :declarations declarations :forms forms) fake-lambda-form
       (destructuring-bind (&optional args arglist-opts) (split-sequence:split-sequence '&opts args-and-opts :test #'symbol-name=)
-        (let* ((name (if (stringp name) name (symbol->vim-name name)))
+        (let* ((spec-name (if (stringp name) name (symbol->vim-name name)))
+               (return-name (if (stringp name) (string-upcase name) name))
                (raw-declare-opts (rest (assoc 'opts (cdar declarations) :test #'symbol-name=)))
                (declare-opts (fill-declare-opts raw-declare-opts))
-               (spec-opts (generate-specs declare-opts type)))
+               (spec-opts (generate-specs declare-opts type))
+               (return-symbol (intern (if (stringp name) return-name (symbol-name return-name)))))
           (multiple-value-bind (arglist placeholder-gensyms) (generate-arglist args arglist-opts declare-opts nvim-opts)
           (alexandria:with-gensyms (callback-name spec r)
             `(eval-when (:compile-toplevel :load-toplevel :execute)
@@ -106,11 +108,12 @@
                      ,callback-name
                      #'(lambda (&rest ,r)
                          ,docstring
-                         (destructuring-bind ,arglist ,r
-                           ,(if placeholder-gensyms
-                              `(declare (ignorable ,@placeholder-gensyms)))
-                           (redirect-output (*log-stream*)
-                             ,@forms)))))))))))))
+                         (block ,return-symbol
+                           (destructuring-bind ,arglist ,r
+                             ,(if placeholder-gensyms
+                                `(declare (ignorable ,@placeholder-gensyms)))
+                             (redirect-output (*log-stream*)
+                               ,@forms))))))))))))))
 
 (defmacro defcommand (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
