@@ -61,9 +61,15 @@
 (cl:defun generate-callback-name (type name spec-opts)
   "Generate the callback name neovim will use when referring to this
    function/command/autocmd."
-  (concatenate 'string
-               (format nil "~A:~A:~A" *path* type name)
-               (if (string= type "autocmd") (format nil ":~A" (getf spec-opts :pattern)) "")))
+  (format nil "~A:~A:~A~A" *path* type name (if (string= type "autocmd")
+                                              (format nil ":~A" (getf spec-opts :pattern))
+                                              "")))
+
+(cl:defun make-spec (&key sync name type opts)
+  (plist->string-hash (list :sync (or sync :false)
+                            :name name
+                            :type type
+                            :opts (plist->string-hash opts))))
 
 (defmacro redirect-output ((&optional (where *log-stream*)) &body body)
   `(let ((*standard-output* ,where)
@@ -86,11 +92,11 @@
           (multiple-value-bind (arglist placeholder-gensyms) (generate-arglist args arglist-opts declare-opts nvim-opts)
           (alexandria:with-gensyms (callback-name spec r)
             `(eval-when (:compile-toplevel :load-toplevel :execute)
-                 (let ((,spec (plist->string-hash (list :sync ,(or sync :false)
-                                                        :name ,name
-                                                        :type ,type
-                                                        :opts (plist->string-hash ',spec-opts))))
-                       (,callback-name (generate-callback-name ,type ,name ',spec-opts)))
+                 (let ((,spec (make-spec :sync ,sync
+                                         :name ,spec-name
+                                         :type ,type
+                                         :opts ',spec-opts))
+                       (,callback-name (generate-callback-name ,type ,spec-name ',spec-opts)))
                    (push ,spec *specs*)
                    (unless (and (boundp *using-host*) *using-host*)
                      (progn (register-repl *nvim-instance*)
