@@ -71,11 +71,17 @@
               (capture-reported-spec "opts" (nvim:defautocmd test () (declare (opts (pattern "*.lisp")))))))
 
    (is (equal '(("bang" . "") ("nargs" . "*") ("range" . ""))
-              (capture-reported-spec "opts" (nvim:defcommand test (&rest a &opts bang range) (declare (opts nargs))))))
+              (capture-reported-spec "opts" (nvim:defcommand test (&rest a &opts bang range)
+                                              (declare (opts nargs))
+                                              (declare (ignore a bang range))))))
    (is (equal '(("bang" . "") ("nargs" . "*") ("range" . ""))
-              (capture-reported-spec "opts" (nvim:defcommand test (&rest a &opts (bang b) (range r)) (declare (opts nargs))))))
+              (capture-reported-spec "opts" (nvim:defcommand test (&rest a &opts (bang b) (range r))
+                                              (declare (opts nargs))
+                                              (declare (ignore a b r))))))
    (is (equal '(("bang" . "") ("nargs" . "*") ("range" . "%") ("register" . "r"))
-              (capture-reported-spec "opts" (nvim:defcommand test (&rest a &opts register (bang b) (range r)) (declare (opts nargs (range "%") (register "r"))))))))
+              (capture-reported-spec "opts" (nvim:defcommand wat (&rest a &opts register (bang b) (range r))
+                                              (declare (opts nargs (range "%") (register "r")))
+                                              (declare (ignore a register b r)))))))
 
 
 (nvim:defcommand/s "LispHostTestSameCallbackName" ()

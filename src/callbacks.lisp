@@ -94,7 +94,9 @@
       (destructuring-bind (&optional args arglist-opts) (split-sequence:split-sequence '&opts args-and-opts :test #'symbol-name=)
         (let* ((spec-name (if (stringp name) name (symbol->vim-name name)))
                (return-name (if (stringp name) (string-upcase name) name))
-               (raw-declare-opts (rest (assoc 'opts (cdar declarations) :test #'symbol-name=)))
+               (opts-declaration (find-if #'(lambda (decl) (symbol-name= 'opts (caadr decl))) declarations))
+               (other-declarations (remove-if #'(lambda (decl) (symbol-name= 'opts (caadr decl))) declarations))
+               (raw-declare-opts (cdadar declarations))
                (raw-declare-opts (append-arglist-opts raw-declare-opts arglist-opts))
                (declare-opts (fill-declare-opts raw-declare-opts))
                (spec-opts (generate-specs declare-opts type))
@@ -118,6 +120,7 @@
                          ,docstring
                          (block ,return-symbol
                            (destructuring-bind ,arglist ,r
+                             ,@other-declarations
                              ,(if placeholder-gensyms
                                 `(declare (ignorable ,@placeholder-gensyms)))
                              (redirect-output (*log-stream*)
