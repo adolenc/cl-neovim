@@ -78,6 +78,14 @@
                             :type type
                             :opts (plist->string-hash opts))))
 
+(cl:defun extract-opts-declaration (declarations)
+  (flet ((opts-declaration-specifier-p (declaration-specifier)
+           (symbol-name= 'opts (car declaration-specifier))))
+    (let* ((declaration-specifiers (alexandria:mappend #'cdr declarations))
+           (opts-declaration (find-if #'opts-declaration-specifier-p declaration-specifiers))
+           (other-declarations (remove-if #'opts-declaration-specifier-p declaration-specifiers)))
+      (values (rest opts-declaration) other-declarations))))
+
 (defmacro redirect-output ((&optional (where *log-stream*)) &body body)
   `(let ((*standard-output* ,where)
          (*trace-output* ,where)
@@ -91,40 +99,37 @@
    based on the arguments passed."
   (let ((fake-lambda-form `(defun ,name ,args-and-opts ,@body)))
     (form-fiddle:with-destructured-lambda-form (:docstring docstring :declarations declarations :forms forms) fake-lambda-form
-      (destructuring-bind (&optional args arglist-opts) (split-sequence:split-sequence '&opts args-and-opts :test #'symbol-name=)
-        (let* ((spec-name (if (stringp name) name (symbol->vim-name name)))
-               (return-name (if (stringp name) (string-upcase name) name))
-               (opts-declaration (find-if #'(lambda (decl) (symbol-name= 'opts (caadr decl))) declarations))
-               (other-declarations (remove-if #'(lambda (decl) (symbol-name= 'opts (caadr decl))) declarations))
-               (raw-declare-opts (cdadar declarations))
-               (raw-declare-opts (append-arglist-opts raw-declare-opts arglist-opts))
-               (declare-opts (fill-declare-opts raw-declare-opts))
-               (spec-opts (generate-specs declare-opts type))
-               (return-symbol (intern (if (stringp name) return-name (symbol-name return-name)))))
-          (multiple-value-bind (arglist placeholder-gensyms) (generate-arglist args arglist-opts declare-opts nvim-opts)
-          (alexandria:with-gensyms (callback-name spec r)
-            `(eval-when (:compile-toplevel :load-toplevel :execute)
-                 (let ((,spec (make-spec :sync ,sync
-                                         :name ,spec-name
-                                         :type ,type
-                                         :opts ',spec-opts))
-                       (,callback-name (generate-callback-name ,type ,spec-name ',spec-opts)))
-                   (push ,spec *specs*)
-                   (unless (and (boundp *using-host*) *using-host*)
-                     (progn (register-repl *nvim-instance*)
-                            (register-repl-callback *nvim-instance* ,spec)))
-                   (mrpc:register-callback
-                     *nvim-instance*
-                     ,callback-name
-                     #'(lambda (&rest ,r)
-                         ,docstring
-                         (block ,return-symbol
-                           (destructuring-bind ,arglist ,r
-                             ,@other-declarations
-                             ,(if placeholder-gensyms
-                                `(declare (ignorable ,@placeholder-gensyms)))
-                             (redirect-output (*log-stream*)
-                               ,@forms))))))))))))))
+      (multiple-value-bind (declare-opts other-declarations) (extract-opts-declaration declarations)
+        (destructuring-bind (&optional args arglist-opts) (split-sequence:split-sequence '&opts args-and-opts :test #'symbol-name=)
+          (let* ((spec-name (if (stringp name) name (symbol->vim-name name)))
+                 (return-name (if (stringp name) (string-upcase name) name))
+                 (declare-opts (fill-declare-opts (append-arglist-opts declare-opts arglist-opts)))
+                 (spec-opts (generate-specs declare-opts type))
+                 (return-symbol (intern (if (stringp name) return-name (symbol-name return-name)))))
+            (multiple-value-bind (arglist placeholder-gensyms) (generate-arglist args arglist-opts declare-opts nvim-opts)
+              (let ((new-declarations (append other-declarations (if placeholder-gensyms `((ignorable ,@placeholder-gensyms))))))
+                (alexandria:with-gensyms (callback-name spec r)
+                  `(eval-when (:compile-toplevel :load-toplevel :execute)
+                     (let ((,spec (make-spec :sync ,sync
+                                             :name ,spec-name
+                                             :type ,type
+                                             :opts ',spec-opts))
+                           (,callback-name (generate-callback-name ,type ,spec-name ',spec-opts)))
+                       (push ,spec *specs*)
+                       (unless (and (boundp *using-host*) *using-host*)
+                         (progn (register-repl *nvim-instance*)
+                                (register-repl-callback *nvim-instance* ,spec)))
+                       (mrpc:register-callback
+                         *nvim-instance*
+                         ,callback-name
+                         #'(lambda (&rest ,r)
+                             ,docstring
+                             (block ,return-symbol
+                                    (destructuring-bind ,arglist ,r
+                                      ,(if new-declarations
+                                         `(declare ,@new-declarations))
+                                      (redirect-output (*log-stream*)
+                                        ,@forms))))))))))))))))
 
 (defmacro defcommand (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
