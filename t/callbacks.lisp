@@ -45,10 +45,10 @@
                  (nvim:defcommand test () (declare (opts range bang (nargs "*")))))))
    (is (equal '(("bang" . "") ("bar" . "") ("eval" . "eval") ("nargs" . "*") ("range" . "") ("register" . ""))
                (capture-reported-spec "opts"
-                 (nvim:defcommand test () (declare (opts range bang bar (nargs "*") (vim-eval "eval") register))))))
+                 (nvim:defcommand test () (declare (opts range bang bar (nargs "*") (eval "eval") register))))))
    (is (equal '(("bang" . "") ("bar" . "") ("complete" . "file") ("count" . "") ("eval" . "eval") ("nargs" . "?") ("register" . ""))
                (capture-reported-spec "opts"
-                 (nvim:defcommand test () (declare (opts count bang bar (nargs "?") (complete "file") (vim-eval "eval") register))))))
+                 (nvim:defcommand test () (declare (opts count bang bar (nargs "?") (complete "file") (eval "eval") register))))))
    ;; TODO: buffer?
 
    (is (equal '(("pattern" . "*"))
@@ -59,11 +59,11 @@
                  (nvim:defautocmd test () (declare (opts (pattern "*.lisp")))))))
    (is (equal '(("eval" . "eval") ("pattern" . "*"))
                (capture-reported-spec "opts"
-                 (nvim:defautocmd test () (declare (opts (pattern "*") (vim-eval "eval")))))))
+                 (nvim:defautocmd test () (declare (opts (pattern "*") (eval "eval")))))))
 
    (is (equal '(("eval" . "eval"))
                (capture-reported-spec "opts"
-                 (nvim:defun test-long-name () (declare (opts (vim-eval "eval"))))))))
+                 (nvim:defun test-long-name () (declare (opts (eval "eval"))))))))
 
 
 (test callback-undeclared-specs
@@ -133,16 +133,16 @@
                      `(nvim:defcommand/s ,callback-name (a b &rest args &opts ,@(if randomize-opts-order
                                                                                   (alexandria:shuffle (alexandria:copy-sequence 'list opts))
                                                                                   opts))
-                        (declare (opts nargs ,@(substitute '(vim-eval "line(\".\")") 'vim-eval declares)))
+                        (declare (opts nargs ,@(substitute '(eval "line(\".\")") 'eval declares)))
                         (set-result-in-nvim (list (list a b args) ,@return-opts))
                         T))))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (generate-command-callbacks "LispHostCommandCount" ((count co) (bang bn) (register re) (vim-eval line-nr)))
-  (generate-command-callbacks "LispHostCommandRange" ((range ra) (bang bn) (register re) (vim-eval line-nr))))
+  (generate-command-callbacks "LispHostCommandCount" ((count co) (bang bn) (register re) (eval line-nr)))
+  (generate-command-callbacks "LispHostCommandRange" ((range ra) (bang bn) (register re) (eval line-nr))))
 
 (nvim:defcommand/s lisp-host-command-no-arglist-opts (&rest args)
-  (declare (opts range bang bar (complete "file") (vim-eval "line(\".\")-1")))
+  (declare (opts range bang bar (complete "file") (eval "line(\".\")-1")))
   (set-result-in-nvim args))
 
 (nvim:defcommand/s lisp-host-command-no-arglist ()
@@ -181,7 +181,7 @@
 
 
 (nvim:defautocmd buf-enter (filename)
-  (declare (opts (pattern "*.lisp_host_testa") (vim-eval "expand(\"<afile>\")")))
+  (declare (opts (pattern "*.lisp_host_testa") (eval "expand(\"<afile>\")")))
   (set-result-in-nvim filename))
 
 (test autocmd-callbacks
@@ -192,16 +192,16 @@
   (nvim:call/s t "vim_command" "enew!"))
 
 
-(nvim:defun/s lisp-host-fun-full-opts (&rest args &opts vim-eval)
-  (declare (opts (vim-eval "line(\".\")-1")))
-  (list args vim-eval))
+(nvim:defun/s lisp-host-fun-full-opts (&rest args &opts eval)
+  (declare (opts (eval "line(\".\")-1")))
+  (list args eval))
 
-(nvim:defun/s lisp-host-fun-altname-opts (&rest args &opts (vim-eval line-nr))
-  (declare (opts (vim-eval "line(\".\")-1")))
+(nvim:defun/s lisp-host-fun-altname-opts (&rest args &opts (eval line-nr))
+  (declare (opts (eval "line(\".\")-1")))
   (list args line-nr))
 
 (nvim:defun/s lisp-host-fun-extra-opts (&rest args)
-  (declare (opts (vim-eval "line(\".\")-1")))
+  (declare (opts (eval "line(\".\")-1")))
   args)
 
 (nvim:defun/s lisp-host-fun-no-opts (&rest args)

@@ -58,9 +58,8 @@
 
 (cl:defun generate-specs (declare-opts type)
   "Generate the specs from declare opts user specified."
-  (let* ((opts (mapcar #'(lambda (l) (list (intern (symbol-name (first l)) 'keyword) (rest l))) declare-opts))
-         (opts (alexandria:flatten (alexandria:alist-plist opts))))
-     (substitute :eval :vim-eval opts)))
+  (let ((opts (mapcar #'(lambda (l) (list (intern (symbol-name (first l)) 'keyword) (rest l))) declare-opts)))
+    (alexandria:flatten (alexandria:alist-plist opts))))
 
 (cl:defun append-arglist-opts (declare-opts arglist-opts)
   (let ((arglist-opts-names (mapcar #'(lambda (o) (or (and (listp o) (first o)) o)) arglist-opts)))
@@ -138,11 +137,11 @@
 
 (defmacro defcommand (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
-  (construct-callback "command" NIL '(nargs range count bang register vim-eval) '(nargs) name args body))
+  (construct-callback "command" NIL '(nargs range count bang register eval) '(nargs) name args body))
 
 (defmacro defcommand/s (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
-  (construct-callback "command" T '(nargs range count bang register vim-eval) '(nargs) name args body))
+  (construct-callback "command" T '(nargs range count bang register eval) '(nargs) name args body))
 
 
 (defmacro defautocmd (name args &body body)
@@ -156,8 +155,8 @@
 
 (defmacro defun (name args &body body)
   ; nvim-options for function found in runtime/autoload/remote/define.vim#L158-L166
-  (construct-callback "function" NIL '(args vim-eval) '() name args body))
+  (construct-callback "function" NIL '(args eval) '() name args body))
 
 (defmacro defun/s (name args &body body)
   ; nvim-options for function found in runtime/autoload/remote/define.vim#L158-L166
-  (construct-callback "function" T '(args vim-eval) '() name args body))
+  (construct-callback "function" T '(args eval) '() name args body))
