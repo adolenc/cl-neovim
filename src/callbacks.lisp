@@ -3,11 +3,12 @@
 
 (cl:defun short-names (args)
   "Return short names for &opts arguments"
-  (mapcar #'(lambda (arg) (if (and (not (second arg))
-                                   (or (symbol-name= (first arg) 'args)
-                                       (symbol-name= (first arg) 'nargs)))
-                            NIL
-                            (or (second arg) (first arg))))
+  (mapcar #'(lambda (arg)
+              (if (and (not (second arg))
+                       (or (symbol-name= (first arg) 'args)
+                           (symbol-name= (first arg) 'nargs)))
+                NIL
+                (or (second arg) (first arg))))
           (make-alist args)))
 
 (cl:defun generate-arglist (args args-opts declare-opts nvim-opts)
@@ -31,10 +32,11 @@
   "If user specified just '[opt] in declare opts, fill it out with the default
    value. Don't modify the opts that were defined along with their values
    '([opt] [val])."
-  (let ((defaults '((nargs "*") (complete "") (range "") (count "") (bang "") (bar "") (register ""))))
-    (mapcar #'(lambda (opt) (if (listp opt)
-                              opt
-                              (assoc opt defaults :test #'symbol-name=)))
+  (let ((defaults '((nargs "*") (complete "") (range "") (count "") (bang "") (bar "") (register "") (pattern "*"))))
+    (mapcar #'(lambda (opt)
+                (if (listp opt)
+                  opt
+                  (assoc opt defaults :test #'symbol-name=)))
             declare-opts)))
 
 (cl:defun fill-args-into-opts (args declare-opts nvim-opts)
@@ -42,20 +44,15 @@
    with actual user expected arguments, or ignore them, and replace args with
    actual user arguments."
   (if (listp nvim-opts)
-    (let* ((nargs (second (assoc 'nargs declare-opts :test #'symbol-name=)))
-           (opts-wo-nargs (if (or (not nargs) (string= "0" nargs))
-                            (remove 'nargs nvim-opts :test #'symbol-name=)
-                            (substitute `(nargs ,args) 'nargs nvim-opts :test #'symbol-name=))))
-      (substitute `(args ,args) 'args opts-wo-nargs :test #'symbol-name=))
-    (subst args 'args nvim-opts :test #'symbol-name=)))
+    (if (find 'nargs nvim-opts :test #'symbol-name=)
+      (substitute `(nargs ,args) 'nargs nvim-opts :test #'symbol-name=)
+      (substitute `(args  ,args) 'args  nvim-opts :test #'symbol-name=))
+    args))
 
 (cl:defun generate-specs (declare-opts type)
   "Generate the specs from declare opts user specified."
   (let* ((opts (mapcar #'(lambda (l) (list (intern (symbol-name (first l)) 'keyword) (rest l))) declare-opts))
-         (opts (alexandria:flatten (alexandria:alist-plist opts)))
-         (opts (if (and (string= type "autocmd") (not (getf opts :pattern)))
-                 (append '(:pattern "*") opts)
-                 opts)))
+         (opts (alexandria:flatten (alexandria:alist-plist opts))))
      (substitute :eval :vim-eval opts)))
 
 (cl:defun append-arglist-opts (declare-opts arglist-opts)
@@ -94,7 +91,7 @@
          (*query-io* ,where))
      ,@body))
 
-(cl:defun construct-callback (type sync nvim-opts name args-and-opts body)
+(cl:defun construct-callback (type sync nvim-opts required-opts name args-and-opts body)
   "Construct the callback, register it with proper name, and generate specs
    based on the arguments passed."
   (let ((fake-lambda-form `(defun ,name ,args-and-opts ,@body)))
@@ -103,6 +100,7 @@
         (destructuring-bind (&optional args arglist-opts) (split-sequence:split-sequence '&opts args-and-opts :test #'symbol-name=)
           (let* ((spec-name (if (stringp name) name (symbol->vim-name name)))
                  (return-name (if (stringp name) (string-upcase name) name))
+                 (declare-opts (append declare-opts required-opts))
                  (declare-opts (fill-declare-opts (append-arglist-opts declare-opts arglist-opts)))
                  (spec-opts (generate-specs declare-opts type))
                  (return-symbol (intern (if (stringp name) return-name (symbol-name return-name)))))
@@ -133,26 +131,26 @@
 
 (defmacro defcommand (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
-  (construct-callback "command" NIL '(nargs range count bang register vim-eval) name args body))
+  (construct-callback "command" NIL '(nargs range count bang register vim-eval) '(nargs) name args body))
 
 (defmacro defcommand/s (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
-  (construct-callback "command" T '(nargs range count bang register vim-eval) name args body))
+  (construct-callback "command" T '(nargs range count bang register vim-eval) '(nargs) name args body))
 
 
 (defmacro defautocmd (name args &body body)
   ; nvim-options for autocmd found in runtime/autoload/remote/define.vim#L121-L128
-  (construct-callback "autocmd" NIL 'args name args body))
+  (construct-callback "autocmd" NIL 'args '(pattern) name args body))
 
 (defmacro defautocmd/s (name args &body body)
   ; nvim-options for autocmd found in runtime/autoload/remote/define.vim#L121-L128
-  (construct-callback "autocmd" T 'args name args body))
+  (construct-callback "autocmd" T 'args '(pattern) name args body))
 
 
 (defmacro defun (name args &body body)
   ; nvim-options for function found in runtime/autoload/remote/define.vim#L158-L166
-  (construct-callback "function" NIL '(args vim-eval) name args body))
+  (construct-callback "function" NIL '(args vim-eval) '() name args body))
 
 (defmacro defun/s (name args &body body)
   ; nvim-options for function found in runtime/autoload/remote/define.vim#L158-L166
-  (construct-callback "function" T '(args vim-eval) name args body))
+  (construct-callback "function" T '(args vim-eval) '() name args body))

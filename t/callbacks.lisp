@@ -36,16 +36,16 @@
 (test callback-opts-specs
    (is (equal '(("nargs" . "*"))
               (capture-reported-spec "opts"
-                (nvim:defcommand/s test () (declare (opts nargs))))))
+                (nvim:defcommand/s test () (declare (opts (nargs "*")))))))
    (is (equal  '(("nargs" . "*"))
                (capture-reported-spec "opts"
-                 (nvim:defcommand test () (declare (opts nargs))))))
+                 (nvim:defcommand test () (declare (opts (nargs "*")))))))
    (is (equal '(("bang" . "") ("nargs" . "*") ("range" . ""))
                (capture-reported-spec "opts"
-                 (nvim:defcommand test () (declare (opts range bang nargs))))))
+                 (nvim:defcommand test () (declare (opts range bang (nargs "*")))))))
    (is (equal '(("bang" . "") ("bar" . "") ("eval" . "eval") ("nargs" . "*") ("range" . "") ("register" . ""))
                (capture-reported-spec "opts"
-                 (nvim:defcommand test () (declare (opts range bang bar nargs (vim-eval "eval") register))))))
+                 (nvim:defcommand test () (declare (opts range bang bar (nargs "*") (vim-eval "eval") register))))))
    (is (equal '(("bang" . "") ("bar" . "") ("complete" . "file") ("count" . "") ("eval" . "eval") ("nargs" . "?") ("register" . ""))
                (capture-reported-spec "opts"
                  (nvim:defcommand test () (declare (opts count bang bar (nargs "?") (complete "file") (vim-eval "eval") register))))))
@@ -67,25 +67,25 @@
 
 
 (test callback-undeclared-specs
+   (is (equal '(("pattern" . "*"))
+              (capture-reported-spec "opts" (nvim:defautocmd test ()))))
    (is (equal '(("pattern" . "*.lisp"))
               (capture-reported-spec "opts" (nvim:defautocmd test () (declare (opts (pattern "*.lisp")))))))
 
    (is (equal '(("bang" . "") ("nargs" . "*") ("range" . ""))
               (capture-reported-spec "opts" (nvim:defcommand test (&rest a &opts bang range)
-                                              (declare (opts nargs))
                                               (declare (ignore a bang range))))))
    (is (equal '(("bang" . "") ("nargs" . "*") ("range" . ""))
               (capture-reported-spec "opts" (nvim:defcommand test (&rest a &opts (bang b) (range r))
-                                              (declare (opts nargs))
                                               (declare (ignore a b r))))))
    (is (equal '(("bang" . "") ("nargs" . "*") ("range" . "%") ("register" . "r"))
               (capture-reported-spec "opts" (nvim:defcommand wat (&rest a &opts register (bang b) (range r))
-                                              (declare (opts nargs (range "%") (register "r")))
+                                              (declare (opts (range "%") (register "r")))
                                               (declare (ignore a register b r)))))))
 
 
-(nvim:defcommand/s "LispHostTestSameCallbackName" ()
-  (declare (opts bang))
+(nvim:defcommand/s "LispHostTestSameCallbackName" (&opts bang)
+  (declare (ignore bang))
   (set-result-in-nvim "first cmd"))
 
 (nvim:defcommand/s "LispHostTestSameCallbackName" ()
@@ -122,11 +122,10 @@
   (generate-command-callbacks "LispHostCommandRange" ((range ra) (bang bn) (register re) (vim-eval line-nr))))
 
 (nvim:defcommand/s lisp-host-command-no-arglist-opts (&rest args)
-  (declare (opts range bang bar nargs (complete "file") (vim-eval "line(\".\")-1")))
+  (declare (opts range bang bar (complete "file") (vim-eval "line(\".\")-1")))
   (set-result-in-nvim args))
 
 (nvim:defcommand/s lisp-host-command-no-arglist ()
-  (declare (opts nargs))
   (set-result-in-nvim "called!"))
 
 (test command-callbacks
