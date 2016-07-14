@@ -83,6 +83,26 @@
                                               (declare (opts (range "%") (register "r")))
                                               (declare (ignore a register b r)))))))
 
+(test callback-undeclared-nargs
+   (is (equal '(("nargs" . "*"))
+              (capture-reported-spec "opts" (nvim:defcommand test () (declare (opts (nargs "*")))))))
+   (is (equal '(("nargs" . "explicit nargs"))
+              (capture-reported-spec "opts" (nvim:defcommand test () (declare (opts (nargs "explicit nargs")))))))
+   (is (equal '(("nargs" . "*"))
+              (capture-reported-spec "opts" (nvim:defcommand test (&rest r) r))))
+   (is (equal '(("nargs" . "0"))
+              (capture-reported-spec "opts" (nvim:defcommand test ()))))
+   (is (equal '(("bang" . "") ("nargs" . "0"))
+              (capture-reported-spec "opts" (nvim:defcommand test (&opts bang) bang))))
+   (is (equal '(("nargs" . "1"))
+              (capture-reported-spec "opts" (nvim:defcommand test (a) a))))
+   (is (equal '(("nargs" . "?"))
+              (capture-reported-spec "opts" (nvim:defcommand test (&optional a) a))))
+   (is (equal '(("nargs" . "+"))
+              (capture-reported-spec "opts" (nvim:defcommand test (a b c &rest r) (list a b c r)))))
+   (is (equal '(("nargs" . "+"))
+              (capture-reported-spec "opts" (nvim:defcommand test (a &rest r) (list a r))))))
+
 
 (nvim:defcommand/s "LispHostTestSameCallbackName" (&opts bang)
   (declare (ignore bang))

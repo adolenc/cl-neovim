@@ -28,11 +28,11 @@
            (short-arg-names (short-names ignored-opts)))
       (values short-arg-names placeholder-gensyms))))
 
-(cl:defun fill-declare-opts (declare-opts)
+(cl:defun fill-declare-opts (declare-opts &key (default-nargs "*"))
   "If user specified just '[opt] in declare opts, fill it out with the default
    value. Don't modify the opts that were defined along with their values
    '([opt] [val])."
-  (let ((defaults '((nargs "*") (complete "") (range "") (count "") (bang "") (bar "") (register "") (pattern "*"))))
+  (let ((defaults `((nargs ,default-nargs) (complete "") (range "") (count "") (bang "") (bar "") (register "") (pattern "*"))))
     (mapcar #'(lambda (opt)
                 (if (listp opt)
                   opt
@@ -48,6 +48,13 @@
       (substitute `(nargs ,args) 'nargs nvim-opts :test #'symbol-name=)
       (substitute `(args  ,args) 'args  nvim-opts :test #'symbol-name=))
     args))
+
+(cl:defun calculate-nargs (lambda-list)
+  (cond ((null lambda-list) "0")
+        ((= (length lambda-list) 1) "1")
+        ((and (= (length lambda-list) 2) (symbol-name= (first lambda-list) '&optional)) "?")
+        ((and (not (symbol-name= (first lambda-list) '&rest)) (position '&rest lambda-list :test #'symbol-name=)) "+")
+        (t "*")))
 
 (cl:defun generate-specs (declare-opts type)
   "Generate the specs from declare opts user specified."
@@ -101,7 +108,7 @@
           (let* ((spec-name (if (stringp name) name (symbol->vim-name name)))
                  (return-name (if (stringp name) (string-upcase name) name))
                  (declare-opts (append declare-opts required-opts))
-                 (declare-opts (fill-declare-opts (append-arglist-opts declare-opts arglist-opts)))
+                 (declare-opts (fill-declare-opts (append-arglist-opts declare-opts arglist-opts) :default-nargs (calculate-nargs args)))
                  (spec-opts (generate-specs declare-opts type))
                  (return-symbol (intern (if (stringp name) return-name (symbol-name return-name)))))
             (multiple-value-bind (arglist placeholder-gensyms) (generate-arglist args arglist-opts declare-opts nvim-opts)
