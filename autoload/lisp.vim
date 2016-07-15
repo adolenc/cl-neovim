@@ -1,5 +1,9 @@
 let s:lisp_host_script = expand('<sfile>:p:h') . "/host.lisp"
 
+function! lisp#LispHostScript()
+  return s:lisp_host_script
+endfunction
+
 function! lisp#GetImplementationCmd()
   " While sbcl should probably be the default implementation everyone
   " writing plugins uses, we do allow user to specify his favourite
@@ -15,19 +19,11 @@ function! lisp#GetImplementationCmd()
     " For the most common implementations, user shouldn't have to specify all
     " the arguments in a list, but just the name of the implementation as a
     " string.
-    let implementation_cmds = {"sbcl": ["sbcl", "--noinform", "--disable-debugger", "--load", expand("~/quicklisp/setup.lisp"), "--load", "$LISP_HOST"]}
+    let implementation_cmds = {"sbcl": ["sbcl", "--noinform", "--disable-debugger", "--load", expand("~/quicklisp/setup.lisp"), "--load", lisp#LispHostScript()]}
     let implementation_cmd = implementation_cmds[implementation]
   else
     let implementation_cmd = implementation
   endif
-
-  let i = 0
-  while i < len(implementation_cmd)
-    if implementation_cmd[i] == "$LISP_HOST"
-      let implementation_cmd[i] = s:lisp_host_script
-    endif
-    let i = i + 1
-  endwhile
 
   return implementation_cmd
 endfunction
