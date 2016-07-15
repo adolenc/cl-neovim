@@ -15,7 +15,7 @@ function! lisp#GetImplementationCmd()
     " For the most common implementations, user shouldn't have to specify all
     " the arguments in a list, but just the name of the implementation as a
     " string.
-    let implementation_cmds = {"sbcl": ["sbcl", "--script", "$LISP_HOST"]}
+    let implementation_cmds = {"sbcl": ["sbcl", "--noinform", "--disable-debugger", "--load", expand("~/quicklisp/setup.lisp"), "--load", "$LISP_HOST"]}
     let implementation_cmd = implementation_cmds[implementation]
   else
     let implementation_cmd = implementation

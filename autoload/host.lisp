@@ -1,6 +1,3 @@
-#-quicklisp
-(load "~/.sbclrc")
-
 (with-open-stream (*standard-output* (make-broadcast-stream)) ; make quicklisp quiet about fetching packages
   (let ((*trace-output* *standard-output*)
         (*error-output* *standard-output*)
