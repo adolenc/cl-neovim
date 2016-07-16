@@ -10,5 +10,5 @@
                              (:file "setup")
                              (:file "callbacks"))))
   :perform (test-op (op c)
-             (uiop:symbol-call '#:fiveam '#:run!
-                               (uiop:find-symbol* '#:neovim-test-suite :cl-neovim-tests))))
+             (uiop:symbol-call '#:fiveam '#:run! (uiop:find-symbol* '#:callback-test-suite :cl-neovim-tests))
+             (uiop:symbol-call '#:fiveam '#:run! (uiop:find-symbol* '#:api-test-suite :cl-neovim-tests))))

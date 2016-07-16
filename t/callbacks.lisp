@@ -1,5 +1,5 @@
 (in-package :cl-neovim-tests)
-(in-suite neovim-test-suite)
+(in-suite callback-test-suite)
 
 
 (defmacro capture-reported-spec (spec defform)
@@ -12,12 +12,12 @@
             (spec `(gethash ,spec (first nvim::*specs*)))
             (T `(first nvim::*specs*)))))
 
-(test callback-name-specs
+(test name-specs
    (is (string= "Test"           (capture-reported-spec "name" (nvim:defun test ()))))
    (is (string= "TestLongName"   (capture-reported-spec "name" (nvim:defun test-long-name ()))))
    (is (string= "TestStringName" (capture-reported-spec "name" (nvim:defun "TestStringName" ())))))
 
-(test callback-sync-specs
+(test sync-specs
    (is (eq :false (capture-reported-spec "sync" (nvim:defcommand test ()))))
    (is (eq T      (capture-reported-spec "sync" (nvim:defcommand/s test ()))))
    (is (eq :false (capture-reported-spec "sync" (nvim:defautocmd test ()))))
@@ -25,7 +25,7 @@
    (is (eq :false (capture-reported-spec "sync" (nvim:defun test ()))))
    (is (eq T      (capture-reported-spec "sync" (nvim:defun/s test ())))))
 
-(test callback-type-specs
+(test type-specs
    (is (string= "command"  (capture-reported-spec "type" (nvim:defcommand test ()))))
    (is (string= "command"  (capture-reported-spec "type" (nvim:defcommand/s test ()))))
    (is (string= "autocmd"  (capture-reported-spec "type" (nvim:defautocmd test ()))))
@@ -33,7 +33,7 @@
    (is (string= "function" (capture-reported-spec "type" (nvim:defun test ()))))
    (is (string= "function" (capture-reported-spec "type" (nvim:defun/s test ())))))
 
-(test callback-opts-specs
+(test opts-specs
    (is (equal '(("nargs" . "*"))
               (capture-reported-spec "opts"
                 (nvim:defcommand/s test () (declare (opts (nargs "*")))))))
@@ -66,7 +66,7 @@
                  (nvim:defun test-long-name () (declare (opts (eval "eval"))))))))
 
 
-(test callback-undeclared-specs
+(test undeclared-specs
    (is (equal '(("pattern" . "*"))
               (capture-reported-spec "opts" (nvim:defautocmd test ()))))
    (is (equal '(("pattern" . "*.lisp"))
@@ -83,7 +83,7 @@
                                               (declare (opts (range "%") (register "r")))
                                               (declare (ignore a register b r)))))))
 
-(test callback-undeclared-nargs
+(test undeclared-nargs
    (is (equal '(("nargs" . "*"))
               (capture-reported-spec "opts" (nvim:defcommand test () (declare (opts (nargs "*")))))))
    (is (equal '(("nargs" . "explicit nargs"))

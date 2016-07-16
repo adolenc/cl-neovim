@@ -1,6 +1,5 @@
 (ql:quickload :cl-neovim-tests)
 (in-package :cl-neovim-tests)
-(in-suite neovim-test-suite)
 
 
 ; Show the progress of testing in neovim's statusline
@@ -13,10 +12,11 @@
 
 (nvim:defcommand lisp-host-run-tests (&optional filename)
   (declare (opts (nargs "?") (complete "file")))
-  (let* ((test-results (fiveam:run 'neovim-test-suite))
+  (let* ((test-results (list (fiveam:run 'callback-test-suite)
+                             (fiveam:run 'api-test-suite)))
          (test-details (with-output-to-string (fiveam:*test-dribble*)
-                         (fiveam:explain! test-results)))
-         (success (fiveam:results-status test-results)))
+                         (mapcar #'fiveam:explain! test-results)))
+         (success (every #'fiveam:results-status test-results)))
     (format t "~&~A~%" test-details)
     (if filename
       (progn (if (not success)
