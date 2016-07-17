@@ -12,12 +12,12 @@
 
 (nvim:defcommand lisp-host-run-tests (&optional filename)
   (declare (opts (nargs "?") (complete "file")))
-  (let* ((test-results (list (fiveam:run 'callback-test-suite)
-                             (fiveam:run 'api-test-suite)))
+  (let* ((test-results (list (fiveam:run 'api-low-level-test-suite)
+                             (fiveam:run 'callback-test-suite)))
          (test-details (with-output-to-string (fiveam:*test-dribble*)
                          (mapcar #'fiveam:explain! test-results)))
          (success (every #'fiveam:results-status test-results)))
-    (format t "~&~A~%" test-details)
+    (format t "~&~A~%~%Success: ~A~%" test-details success)
     (if filename
       (progn (if (not success)
                (with-open-file (file filename :direction :output :if-does-not-exist :create :if-exists :overwrite)

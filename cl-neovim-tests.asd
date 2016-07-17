@@ -8,7 +8,8 @@
   :components ((:module "t"
                 :components ((:file "package")
                              (:file "setup")
-                             (:file "callbacks"))))
+                             (:file "callbacks")
+                             (:file "api-low-level"))))
   :perform (test-op (op c)
-             (uiop:symbol-call '#:fiveam '#:run! (uiop:find-symbol* '#:callback-test-suite :cl-neovim-tests))
-             (uiop:symbol-call '#:fiveam '#:run! (uiop:find-symbol* '#:api-test-suite :cl-neovim-tests))))
+             (uiop:symbol-call '#:fiveam '#:run! (uiop:find-symbol* '#:api-low-level-test-suite :cl-neovim-tests))
+             (uiop:symbol-call '#:fiveam '#:run! (uiop:find-symbol* '#:callback-test-suite :cl-neovim-tests))))
