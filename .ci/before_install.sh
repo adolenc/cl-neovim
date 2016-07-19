@@ -19,11 +19,12 @@ sudo make install
 # cl-travis
 curl https://raw.githubusercontent.com/luismbo/cl-travis/master/install.sh | bash
 
-# up-to-date cl-messagepack-rpc
-git clone https://github.com/adolenc/cl-messagepack-rpc $HOME/lisp/cl-messagepack-rpc
-
 # support for coveralls
 git clone https://github.com/fukamachi/cl-coveralls $HOME/lisp/cl-coveralls
+
+# up-to-date cl-messagepack and cl-messagepack-rpc
+git clone -b ext https://github.com/adolenc/cl-messagepack $HOME/lisp/cl-messagepack
+git clone https://github.com/adolenc/cl-messagepack-rpc $HOME/lisp/cl-messagepack-rpc
 
 # neovim
 eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64"
