@@ -26,6 +26,11 @@
            do (sleep 0.5)
            finally (return result))))
 
+(defmacro signals-no-error (&body forms)
+  `(handler-bind ((error #'(lambda (c) (fail (princ-to-string c)))))
+     ,@forms
+     (pass)))
+
 (defparameter *cleanup*
 ":function BeforeEachTest()
     set all&
