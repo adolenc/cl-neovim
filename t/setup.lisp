@@ -1,6 +1,7 @@
 (in-package :cl-neovim-tests)
 (def-suite callback-test-suite :description "Test suite for cl-neovim callbacks")
 (def-suite api-low-level-test-suite :description "Test suite for low level cl-neovim api")
+(def-suite api-buffer-test-suite :description "Test suite for cl-neovim buffer api")
 
 
 (unless nvim::*using-host*
