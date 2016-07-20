@@ -2,14 +2,14 @@
 (in-suite api-buffer-test-suite)
 
 
-(test vars
+(test buffer-vars
   (with-fixture cleanup ()
     (let ((b (nvim:current-buffer)))
       (setf (nvim:buffer-var b "lisp") '(1 2 (3 4)))
       (is (equal '(1 2 (3 4)) (nvim:buffer-var b "lisp")))
       (is (equal '(1 2 (3 4)) (nvim:eval "b:lisp"))))))
 
-(test options
+(test buffer-options
   (with-fixture cleanup ()
     (let ((b (nvim:current-buffer)))
       (is (equal 8 (nvim:buffer-option b "shiftwidth")))
@@ -19,7 +19,7 @@
       (is (equal "test" (nvim:buffer-option b "define")))
       (is (equal "^\\s*#\\s*define" (nvim:option "define"))))))
 
-(test number
+(test buffer-number
   (with-fixture cleanup ()
     (let ((current-number (nvim:buffer-number (nvim:current-buffer))))
       (nvim:command "new")
@@ -27,7 +27,7 @@
       (nvim:command "new")
       (is (= (+ 2 current-number) (nvim:buffer-number (nvim:current-buffer)))))))
 
-(test name
+(test buffer-name
   (with-fixture cleanup ()
     (nvim:command "new")
     (let ((b (nvim:current-buffer))
@@ -38,7 +38,7 @@
       (nvim:command "silent w!")
       (is-true (probe-file new-name)))))
 
-(test current-buffer
+(test buffer-current-buffer
   (with-fixture cleanup ()
     (let ((b1 (nvim:current-buffer)))
       ; to test with eql we would have to fix cl-messagepack
@@ -53,7 +53,7 @@
         (setf (nvim:current-buffer) b2)
         (is (= (nvim:buffer-number (nvim:current-buffer)) (nvim:buffer-number b2)))))))
 
-(test valid
+(test buffer-valid
   (with-fixture cleanup ()
     (nvim:command "new")
     (let ((b (nvim:current-buffer)))
@@ -61,7 +61,7 @@
       (nvim:command "bw!")
       (is-false (nvim:buffer-valid-p b)))))
 
-(test buffers
+(test buffer-buffers
   (with-fixture cleanup ()
     (let* ((b (nvim:current-buffer))
            (n (nvim:buffer-number b)))
@@ -76,7 +76,7 @@
       (is (= 5 (length (nvim:buffers))))
       (is-false (find n (nvim:buffers) :key #'nvim:buffer-number)))))
 
-(test line
+(test buffer-line
   (with-fixture cleanup ()
     (let ((b (nvim:current-buffer)))
       (is (equal '("") (nvim:buffer-lines b 0 -1 T)))
@@ -95,7 +95,7 @@
       (nvim:buffer-del-line b 0)
       (is (equal '("") (nvim:buffer-lines b 0 -1 T))))))
 
-(test lines
+(test buffer-lines
   (with-fixture cleanup ()
     (let ((b (nvim:current-buffer)))
       (is (equal '("") (nvim:buffer-lines b 0 -1 T)))
@@ -122,7 +122,7 @@
       (setf (nvim:buffer-lines b 0 -1 T) '("s"))
       (is (equal '("s") (nvim:buffer-lines b 0 -1 T))))))
 
-(test line-slice
+(test buffer-line-slice
   (with-fixture cleanup ()
     (let ((b (nvim:current-buffer)))
       (setf (nvim:buffer-line-slice b 0 -1 T T) '("abc" "def" "ghi"))
@@ -139,14 +139,14 @@
       (setf (nvim:buffer-line-slice b 1 2 T T) '("Abc" "Def" "Ghi" "Jkl"))
       (is (equal '("ABC" "Abc" "Def" "Ghi" "Jkl") (nvim:buffer-line-slice b 0 -1 T T))))))
 
-(test count
+(test buffer-count
   (with-fixture cleanup ()
     (let ((b (nvim:current-buffer)))
       (setf (nvim:buffer-lines b 0 -1 T) '("a" "b" "c" "d"))
       (is (= 4 (length (nvim:buffer-lines b 0 -1 T))))
       (is (= 4 (nvim:buffer-line-count b))))))
 
-(test marks
+(test buffer-marks
   (with-fixture cleanup ()
     (let ((b (nvim:current-buffer)))
       (setf (nvim:buffer-lines b 0 -1 T) '("abc" "def" "ghi"))
@@ -154,6 +154,6 @@
       (nvim:command "mark V")
       (is (equal '(2 0) (nvim:buffer-mark (nvim:current-buffer) "V"))))))
 
-(test exceptions
+(test buffer-exceptions
   (with-fixture cleanup ()
     (signals error (nvim:buffer-option (nvim:current-buffer) "invalid-option"))))

@@ -2,7 +2,7 @@
 (in-suite api-vim-test-suite)
 
 
-(test command
+(test vim-command
   (with-fixture cleanup ()
     (let ((tmpfile (format NIL "/tmp/nvim_lisp_tests_~A.tmp" (random 100000))))
       (nvim:command (format NIL "edit ~A" tmpfile))
@@ -17,12 +17,12 @@
           (fail))
       (delete-file tmpfile))))
 
-(test command-output
+(test vim-command-output
   (with-fixture cleanup ()
     (is (string= (format nil "~ctest" #\Newline)
                  (nvim:command-output "echo 'test'")))))
 
-(test eval
+(test vim-eval
   (with-fixture cleanup ()
     (nvim:command "let g:v1 = 'a'")
     (nvim:command "let g:v2 = [1, 2, ['v3', 3]]")
@@ -30,16 +30,16 @@
       (is (equal '(1 2 ("v3" 3)) (gethash "v2" result)))
       (is (equal "a" (gethash "v1" result))))))
 
-(test call
+(test vim-call
   (with-fixture cleanup ()
     (is (string= "first, last" (nvim:call-function "join" '(("first" "last") ", "))))))
 
-(test strwidth
+(test vim-strwidth
   (with-fixture cleanup ()
     (is (= 3 (nvim:strwidth "abc")))
     (is (= 16 (nvim:strwidth "lisphost大好き〜")))))
 
-(test chdir
+(test vim-chdir
   (with-fixture cleanup ()
     (let ((pwd (nvim:eval "getcwd()")))
       (nvim:change-directory "/")
@@ -47,19 +47,19 @@
       (nvim:change-directory pwd)
       (is (string= pwd (nvim:eval "getcwd()"))))))
 
-(test current-line
+(test vim-current-line
   (with-fixture cleanup ()
     (is (string= "" (nvim:current-line)))
     (setf (nvim:current-line) "abc")
     (is (string= "abc" (nvim:current-line)))))
 
-(test vars
+(test vim-vars
   (with-fixture cleanup ()
     (setf (nvim:var "lisp") '((1) "2" (3 4)))
     (is (equal '((1) "2" (3 4)) (nvim:var "lisp")))
     (is (equal '((1) "2" (3 4)) (nvim:eval "g:lisp")))))
 
-(test options
+(test vim-options
   (with-fixture cleanup ()
     (is (string= "tab:> ,trail:-,nbsp:+" (nvim:option "listchars")))
     (setf (nvim:option "listchars") "tab:xy")

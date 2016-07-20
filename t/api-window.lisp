@@ -2,7 +2,7 @@
 (in-suite api-window-test-suite)
 
 
-(test buffer
+(test window-buffer
   (with-fixture cleanup ()
     (is (= (nvim:buffer-number (nvim:current-buffer))
            (nvim:buffer-number (nvim:window-buffer (first (nvim:windows))))))
@@ -13,7 +13,7 @@
     (is (/= (nvim:buffer-number (nvim:window-buffer (first (nvim:windows))))
             (nvim:buffer-number (nvim:window-buffer (second (nvim:windows))))))))
 
-(test cursor
+(test window-cursor
   (with-fixture cleanup ()
     (let ((w (nvim:current-window)))
       (is (equal '(1 0) (nvim:window-cursor w)))
@@ -24,7 +24,7 @@
       (setf (nvim:window-cursor w) '(2 6))
       (is (equal '("this" "is some text") (nvim:buffer-lines (nvim:current-buffer) 0 -1 T))))))
 
-(test height
+(test window-height
   (with-fixture cleanup ()
     (nvim:command "vsplit")
     (is (= (nvim:window-height (first (nvim:windows)))
@@ -36,7 +36,7 @@
     (setf (nvim:window-height (second (nvim:windows))) 2)
     (is (= (nvim:window-height (second (nvim:windows)))))))
 
-(test width
+(test window-width
   (with-fixture cleanup ()
     (nvim:command "split")
     (is (= (nvim:window-width (first (nvim:windows)))
@@ -48,7 +48,7 @@
     (setf (nvim:window-width (second (nvim:windows))) 2)
     (is (= (nvim:window-width (second (nvim:windows)))))))
 
-(test vars
+(test window-vars
   (with-fixture cleanup ()
     (let ((w (nvim:current-window)))
       (setf (nvim:window-var w "lisp") '((1) "2" (3 4)))
@@ -56,7 +56,7 @@
       (is (equal '((1) "2" (3 4)) (nvim:eval "w:lisp"))))))
 
 
-(test options
+(test window-options
   (with-fixture cleanup ()
     (let ((w (nvim:current-window)))
       (setf (nvim:window-option w "colorcolumn") "4,3")
@@ -65,7 +65,7 @@
       (is (equal "window-status" (nvim:window-option w "statusline")))
       (is (string= "" (nvim:option "statusline"))))))
 
-(test position
+(test window-position
   (with-fixture cleanup ()
     (flet ((row (window) (first (nvim:window-position window)))
            (col (window) (second (nvim:window-position window))))
@@ -81,7 +81,7 @@
           (is (<= (1- split-pos) (row (third (nvim:windows))) (1+ split-pos)))
           (is (= 0 (col (third (nvim:windows))))))))))
 
-(test valid
+(test window-valid
   (with-fixture cleanup ()
     (nvim:command "split")
     (let ((w (second (nvim:windows))))

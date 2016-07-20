@@ -2,7 +2,7 @@
 (in-suite api-tabpage-test-suite)
 
 
-(test setting-current
+(test tabpage-setting-current
   (with-fixture cleanup ()
     (is (= 1 (length (nvim:tabpage-windows (nvim:current-tabpage)))))
     (nvim:command "tabnew")
@@ -15,14 +15,14 @@
     (setf (nvim:current-tabpage) (second (nvim:tabpages)))
     (is (= 3 (length (nvim:tabpage-windows (nvim:current-tabpage)))))))
 
-(test vars
+(test tabpage-vars
   (with-fixture cleanup ()
     (let ((tp (nvim:current-tabpage)))
       (setf (nvim:tabpage-var tp "lisp") '((1) "2" (3 4)))
       (is (equal '((1) "2" (3 4)) (nvim:tabpage-var tp "lisp")))
       (is (equal '((1) "2" (3 4)) (nvim:eval "t:lisp"))))))
 
-(test valid
+(test tabpage-valid
   (with-fixture cleanup ()
     (nvim:command "tabnew")
     (let ((tp (second (nvim:tabpages))))
