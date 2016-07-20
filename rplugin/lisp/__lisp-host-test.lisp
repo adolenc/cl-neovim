@@ -14,6 +14,7 @@
   (declare (opts (nargs "?") (complete "file")))
   (let* ((test-results (list (fiveam:run 'api-low-level-test-suite)
                              (fiveam:run 'callback-test-suite)
+                             (fiveam:run 'api-vim-test-suite)
                              (fiveam:run 'api-buffer-test-suite)
                              (fiveam:run 'api-window-test-suite)
                              (fiveam:run 'api-tabpage-test-suite)))

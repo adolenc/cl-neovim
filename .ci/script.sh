@@ -23,5 +23,5 @@ else
                  (uiop:quit -1)))' \
      -e '(coveralls:with-coveralls (:exclude (list "t"))
            (ql:quickload :cl-neovim-tests)
-           (asdf:test-system :cl-neovim))'
+           (asdf:test-system :cl-neovim :force T))'
 fi
