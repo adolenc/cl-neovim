@@ -1,8 +1,6 @@
 (in-package :cl-user)
-
 (defpackage #:lisp-interface
-  (:use #:cl #:cl-neovim)
-  (:shadowing-import-from #:cl #:defun #:eval))
+  (:use #:cl))
 (in-package :lisp-interface)
 
 
@@ -10,25 +8,23 @@
   (let ((output (gensym)))
     `(let ((,output (with-output-to-string (*standard-output*)
                      ,@forms)))
-       (nvim:command (format nil "echo '~A'" ,output)))))
+       (when (> (length ,output) 0)
+         (nvim:command (format nil "echo '~A'" ,output))))))
 
 (defun eval-string (str)
   (eval (read-from-string str)))
 
 
 (nvim:defcommand/s lisp (&rest form)
-  (declare (opts nargs))
   (echo-output (eval-string (format nil "~{~A~^ ~}" form))))
 
-(nvim:defcommand/s lispdo (&rest form &opts range)
-  (declare (opts nargs range))
+(nvim:defcommand/s lispdo (&rest form &opts (range (start end)))
   (let ((fn (eval-string
               (format nil "#'(lambda (line line-nr)
                                (declare (ignorable line line-nr))
                                ~{~A~^ ~})"
                       form)))
-        (start (1- (first range)))
-        (end (second range)))
+        (start (1- start)))
     (echo-output
       (let ((new-lines (mapcar #'(lambda (line line-nr)
                                    (or (let ((new-line (funcall fn line line-nr)))
