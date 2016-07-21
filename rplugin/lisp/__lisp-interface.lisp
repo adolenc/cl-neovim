@@ -36,4 +36,9 @@
                                (loop for line-nr from start upto end collect (1+ line-nr)))))
         (setf (nvim:buffer-lines (nvim:current-buffer) start end T) new-lines)))))
 
+(nvim:defcommand/s lispfile (filename &opts range)
+  (declare (opts (complete "file")))
+  (echo-output (load filename)))
+
+
 (in-package :cl-user)
