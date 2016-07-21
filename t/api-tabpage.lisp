@@ -29,3 +29,14 @@
       (is-true (nvim:tabpage-valid-p tp))
       (nvim:command "tabclose")
       (is-false (nvim:tabpage-valid-p tp)))))
+
+(test tabpage-window
+  (with-fixture cleanup ()
+    (let ((tp (nvim:current-tabpage)))
+      (nvim:command "normal ibuffer1")
+      (is (equal '("buffer1") (nvim:buffer-lines (nvim:window-buffer (nvim:tabpage-window (nvim:current-tabpage))) 0 1 T)))
+      (nvim:command "tabnew")
+      (nvim:command "enew")
+      (nvim:command "normal ibuffer2")
+      (is (equal '("buffer2") (nvim:buffer-lines (nvim:window-buffer (nvim:tabpage-window (nvim:current-tabpage))) 0 1 T)))
+      (is (equal '("buffer1") (nvim:buffer-lines (nvim:window-buffer (nvim:tabpage-window tp)) 0 1 T))))))

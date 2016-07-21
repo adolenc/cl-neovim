@@ -89,3 +89,14 @@
       (is-true (nvim:window-valid-p w))
       (nvim:command "q")
       (is-false (nvim:window-valid-p w)))))
+
+(test window-tabpage
+  (with-fixture cleanup ()
+    (let ((w (nvim:current-window)))
+      (nvim:window-tabpage (nvim:current-window))
+      (is (= 1 (length (nvim:tabpage-windows (nvim:window-tabpage (nvim:current-window))))))
+      (nvim:command "tabnew")
+      (dotimes (i 5)
+        (nvim:command "split"))
+      (is (= 6 (length (nvim:tabpage-windows (nvim:window-tabpage (nvim:current-window))))))
+      (is (= 1 (length (nvim:tabpage-windows (nvim:window-tabpage w))))))))

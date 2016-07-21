@@ -51,7 +51,9 @@
   (with-fixture cleanup ()
     (is (string= "" (nvim:current-line)))
     (setf (nvim:current-line) "abc")
-    (is (string= "abc" (nvim:current-line)))))
+    (is (string= "abc" (nvim:current-line)))
+    (nvim:del-current-line)
+    (is (string= "" (nvim:current-line)))))
 
 (test vim-vars
   (with-fixture cleanup ()
@@ -64,3 +66,54 @@
     (is (string= "tab:> ,trail:-,nbsp:+" (nvim:option "listchars")))
     (setf (nvim:option "listchars") "tab:xy")
     (is (string= "tab:xy" (nvim:option "listchars")))))
+
+(test vim-runtime-paths
+  (with-fixture cleanup ()
+    (is (<= 1 (length (nvim:list-runtime-paths))))
+    (is-true (find (nvim:eval "expand('$HOME/.config/nvim')")
+                   (nvim:list-runtime-paths)
+                   :test #'string=))))
+
+(test vim-colors
+  (with-fixture cleanup ()
+    (let* ((color-map (nvim:color-map))
+           (colors (alexandria:hash-table-keys color-map)))
+      (dotimes (i 15)
+        (let ((color (alexandria:random-elt colors)))
+          (is (= (gethash color color-map) (nvim:name-to-color color))))))))
+
+(test vim-broadcast
+  (with-fixture cleanup ()
+    (let ((event1-called)
+          (event2-called))
+      (flet ((reset-status () (setf event1-called NIL
+                                    event2-called NIL)))
+        (nvim:subscribe "event2" #'(lambda (&rest args)
+                                     (alexandria:appendf event2-called (list args))))
+        (nvim:command "call rpcnotify(0, 'event1', 1, 2, 3)")
+        (nvim:command "call rpcnotify(0, 'event2', 4, 5, 6)")
+        (nvim:command "call rpcnotify(0, 'event2', 7, 8, 9)")
+        (is (equal '() event1-called))
+        (is (equal '((4 5 6) (7 8 9)) event2-called))
+        (reset-status)
+        (nvim:unsubscribe "event2")
+        (nvim:subscribe "event1" #'(lambda (&rest args)
+                                     (alexandria:appendf event1-called (list args))))
+        (nvim:command "call rpcnotify(0, 'event2', 10, 11, 12)")
+        (nvim:command "call rpcnotify(0, 'event1', 13, 14, 15)")
+        (is (equal '((13 14 15)) event1-called))
+        (is (equal '() event2-called))))))
+
+(test vim-vvars
+  (with-fixture cleanup ()
+    (nvim:command "let v:warningmsg='test'")
+    (is (string= "test" (nvim:vvar "warningmsg")))
+    (nvim:command "let v:warningmsg='test2'")
+    (is (string= "test2" (nvim:vvar "warningmsg")))))
+
+(test vim-api-info
+  (with-fixture cleanup ()
+    (destructuring-bind (channel metadata) (nvim:api-info)
+      (is (<= 0 channel))
+      (is (equal '("error_types" "functions" "types")
+                 (sort (alexandria:hash-table-keys metadata) #'string<))))))

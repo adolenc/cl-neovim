@@ -137,6 +137,8 @@
       (is (equal '() (nvim:buffer-line-slice b 2 2 NIL NIL)))
       (setf (nvim:buffer-line-slice b 0 1 T T) '("ABC" "DEF"))
       (is (equal '("ABC" "DEF" "ghi") (nvim:buffer-line-slice b 0 -1 T T)))
+      (is (equal '("DEF") (nvim:buffer-line-slice b 0 -1 NIL NIL)))
+      (is (equal '("DEF") (nvim:buffer-line-slice b 0 -1 :false :false)))
       (setf (nvim:buffer-line-slice b 1 2 T T) '("Abc" "Def" "Ghi" "Jkl"))
       (is (equal '("ABC" "Abc" "Def" "Ghi" "Jkl") (nvim:buffer-line-slice b 0 -1 T T))))))
 
