@@ -1,6 +1,9 @@
 (in-package #:cl-neovim)
 
 
+(defvar +opts-conversions+
+  '((bang . (= bang 1))))
+
 (cl:defun short-names (args)
   "Return short names for &opts arguments"
   (mapcar #'(lambda (arg)
@@ -97,6 +100,13 @@
          (*query-io* ,where))
      ,@body))
 
+(cl:defun ignored-variables (declarations)
+  (let ((ignore-declarations (remove-if-not #'(lambda (d)
+                                                (symbol-name= (car d) 'ignore))
+                                            declarations)))
+    (alexandria:mappend #'cdr ignore-declarations)))
+
+
 (cl:defun construct-callback (type sync nvim-opts required-opts name args-and-opts body)
   "Construct the callback, register it with proper name, and generate specs
    based on the arguments passed."
@@ -109,7 +119,16 @@
                  (declare-opts (append declare-opts required-opts))
                  (declare-opts (fill-declare-opts (append-arglist-opts declare-opts arglist-opts) :default-nargs (calculate-nargs args)))
                  (spec-opts (generate-specs declare-opts type))
-                 (return-symbol (intern (if (stringp name) return-name (symbol-name return-name)))))
+                 (return-symbol (intern (if (stringp name) return-name (symbol-name return-name))))
+                 (ignored-args (ignored-variables other-declarations))
+                 (conversions (loop with opt-name and short-name and conversion and ignored
+                                    for opt in arglist-opts
+                                    do (setf opt-name   (or (and (listp opt) (first opt)) opt)
+                                             short-name (or (and (listp opt) (second opt)) opt)
+                                             conversion (assoc opt-name +opts-conversions+ :test #'symbol-name=)
+                                             ignored (find short-name ignored-args :test #'symbol-name=))
+                                    when (and conversion (not ignored))
+                                      collect `(,short-name ,(subst short-name opt-name (rest conversion) :test #'symbol-name=)))))
             (multiple-value-bind (arglist placeholder-gensyms) (generate-arglist args arglist-opts declare-opts nvim-opts)
               (let ((new-declarations (append other-declarations (if placeholder-gensyms `((ignorable ,@placeholder-gensyms))))))
                 (alexandria:with-gensyms (callback-name spec r)
@@ -132,8 +151,9 @@
                                     (destructuring-bind ,arglist ,r
                                       ,(if new-declarations
                                          `(declare ,@new-declarations))
-                                      (redirect-output (*log-stream*)
-                                        ,@forms))))))))))))))))
+                                      (let (,@conversions)
+                                        (redirect-output (*log-stream*)
+                                          ,@forms)))))))))))))))))
 
 (defmacro defcommand (name args &body body)
   ; nvim-options for command found in runtime/autoload/remote/define.vim#L54-L87
