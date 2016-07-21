@@ -16,3 +16,15 @@
   (is-true (nvim:call/a t "vim_eval" "3 + 2"))
   (signals-no-error (nvim:call/a nvim:*nvim-instance* "some_nonexistent_fn"))
   (signals-no-error (nvim:call/a nvim:*nvim-instance* "vim_command" "throw 'error'")))
+
+(test generating-api
+  (let ((api (nvim::retrieve-api)))
+    (is (equal '("error_types" "functions" "types")
+               (sort (alexandria:hash-table-keys api) #'string<)))
+    (let ((function-metadata (nvim::parse-api api)))
+      (is (every #'(lambda (mdata)
+                     (find :name mdata))
+                 function-metadata))
+      (is (every #'(lambda (mdata)
+                     (find :parameters mdata))
+                 function-metadata)))))

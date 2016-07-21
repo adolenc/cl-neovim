@@ -11,7 +11,7 @@
           collect (function-metadata f))))
 
 (cl:defun retrieve-api ()
-  (second (send-command "vim_get_api_info" NIL)))
+  (second (call/s t "vim_get_api_info")))
 
 (cl:defun generate-api ()
   (let ((api (parse-api (retrieve-api))))
