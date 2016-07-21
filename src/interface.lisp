@@ -12,10 +12,8 @@
   (let* ((parameter-names (append (parse-parameters parameters)))
          (instance-parameter '(&optional (instance *nvim-instance*)))
          (fn-name (vim-name->symbol (clean-up-name name)))
-         (sync-fn-name (symbol-concat fn-name '/s))
          (async-fn-name (symbol-concat fn-name '/a))
          (funcalls `((,fn-name #'call/s)
-                     (,sync-fn-name #'call/s)
                      (,async-fn-name #'call/a)))
          (false-conversions (loop for (type _) in parameters
                                   for name in parameter-names
