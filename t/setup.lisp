@@ -8,7 +8,7 @@
 
 
 (unless nvim::*using-host*
-  (nvim:connect :file "/tmp/nvim"))
+  (nvim:connect))
 
 (defun get-result-from-nvim (&optional (var-name "lisp_host_test_tmp_result"))
   (nvim:call/s t "vim_get_var" var-name))

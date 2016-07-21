@@ -26,9 +26,20 @@
     (unless client-id
       (setf client-id (first (call/s instance "vim_get_api_info"))))))
 
+(cl:defun parse-env-listen-address (address)
+  (cond ((not (stringp address)) (error "$NVIM_LISTEN_ADDRESS not found"))
+        ((find #\: address) (destructuring-bind (host port) (split-sequence:split-sequence #\: address)
+                              `(:host ,host :port ,(parse-integer port))))
+        ((probe-file address) `(:file ,address))
+        (t (error (format NIL "Could not parse $NVIM_LISTEN_ADDRESS (~A)." address)))))
+
 (cl:defun connect (&rest args &key host port file)
   (let ((mrpc:*extended-types* *nvim-types*))
-    (setf *nvim-instance* (apply #'make-instance 'nvim args))))
+    (setf *nvim-instance* (apply #'make-instance 'nvim (or args (parse-env-listen-address (uiop:getenv "NVIM_LISTEN_ADDRESS")))))))
+
+(cl:defun connect-stdio ()
+  (let ((mrpc:*extended-types* *nvim-types*))
+    (setf *nvim-instance* (make-instance 'nvim))))
 
 (cl:defun listen-once (&optional (instance *nvim-instance*))
   "Block execution listening for a new message for instance."

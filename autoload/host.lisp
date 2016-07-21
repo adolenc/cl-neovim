@@ -12,7 +12,7 @@
 
 (defparameter *loaded-plugin-specs* (list))
 
-(nvim:connect)
+(nvim::connect-stdio)
 
 (defun same-callback-p (callback1 callback2)
   (and (string= (gethash "type" callback1) (gethash "type" callback2))
