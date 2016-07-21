@@ -1,6 +1,8 @@
 (in-package #:cl-neovim)
 
 
+(defvar +custom-implementation+ '(subscribe unsubscribe))
+
 (cl:defun parse-parameters (parameters)
   "Extract names from nvim api's metadata of arguments into a list of symbols."
   (cond ((listp parameters) (mapcar #'(lambda (arg) (vim-name->symbol (second arg))) parameters))
@@ -19,12 +21,29 @@
                                   for name in parameter-names
                                   when (string-equal type "boolean")
                                     collect `(,name (or ,name :false)))))
-    `(progn
-       ,@(loop for (fn-name fn) in funcalls
-               collect (if (setterp name)
-                         `(cl:defun (setf ,fn-name) (,@(last parameter-names) ,@(butlast parameter-names) ,@instance-parameter)
-                            (let (,@false-conversions)
-                              (funcall ,fn instance ,name ,@parameter-names)))
-                         `(cl:defun ,fn-name (,@parameter-names ,@instance-parameter)
-                            (let (,@false-conversions)
-                              (funcall ,fn instance ,name ,@parameter-names))))))))
+    (unless (find fn-name +custom-implementation+ :test #'symbol-name=)
+      `(progn
+         ,@(loop for (fn-name fn) in funcalls
+                 collect (if (setterp name)
+                           `(cl:defun (setf ,fn-name) (,@(last parameter-names) ,@(butlast parameter-names) ,@instance-parameter)
+                                      (let (,@false-conversions)
+                                        (funcall ,fn instance ,name ,@parameter-names)))
+                           `(cl:defun ,fn-name (,@parameter-names ,@instance-parameter)
+                                      (let (,@false-conversions)
+                                        (funcall ,fn instance ,name ,@parameter-names)))))))))
+
+(cl:defun subscribe (event function &optional (instance *nvim-instance*))
+  (mrpc:register-callback instance event function)
+  (nvim:call/s instance "vim_subscribe" event))
+
+(cl:defun subscribe/a (event function &optional (instance *nvim-instance*))
+  (mrpc:register-callback instance event function)
+  (nvim:call/a instance "vim_subscribe" event))
+
+(cl:defun unsubscribe (event &optional (instance *nvim-instance*))
+  (nvim:call/s instance "vim_unsubscribe" event)
+  (mrpc:remove-callback instance event))
+
+(cl:defun unsubscribe/a (event &optional (instance *nvim-instance*))
+  (nvim:call/a instance "vim_unsubscribe" event)
+  (mrpc:remove-callback instance event))
