@@ -1,7 +1,7 @@
 (in-package #:cl-neovim)
 
 
-(defvar +opts-conversions+
+(defparameter *opts-conversions*
   '((bang . (= bang 1))))
 
 (cl:defun short-names (args)
@@ -125,7 +125,7 @@
                                     for opt in arglist-opts
                                     do (setf opt-name   (or (and (listp opt) (first opt)) opt)
                                              short-name (or (and (listp opt) (second opt)) opt)
-                                             conversion (assoc opt-name +opts-conversions+ :test #'symbol-name=)
+                                             conversion (assoc opt-name *opts-conversions* :test #'symbol-name=)
                                              ignored (find short-name ignored-args :test #'symbol-name=))
                                     when (and conversion (not ignored))
                                       collect `(,short-name ,(subst short-name opt-name (rest conversion) :test #'symbol-name=)))))

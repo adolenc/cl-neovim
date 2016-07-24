@@ -177,7 +177,8 @@
   (is (equal "called!" (result-from-nvim/s (nvim:call/s t "vim_command" "LispHostCommandNoArglist"))))
   (signals mrpc:rpc-error (nvim:call/s t "vim_command" "LispHostCommandNoArglist!"))
   (signals mrpc:rpc-error (nvim:call/s t "vim_command" "3,4LispHostCommandNoArglist"))
-  (nvim:call/s t "buffer_set_lines" (nvim:call/s t "vim_get_current_buffer") 0 -1 T '("")))
+  (nvim:call/s t "buffer_set_lines" (nvim:call/s t "vim_get_current_buffer") 0 -1 T '(""))
+  (signals mrpc:rpc-error (nvim:command "LispHostCommandNoArglist 1")))
 
 
 (nvim:defautocmd buf-enter (filename)
