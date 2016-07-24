@@ -46,10 +46,6 @@
 (def-nvim-mrpc-cb "Poll" ()
   "ok")
 
-(def-nvim-mrpc-cb "EnableLogging" (filename)
-  (setf nvim::*log-stream* (open filename :direction :output :if-does-not-exist :create :if-exists :append))
-  T)
-
 (def-nvim-mrpc-cb "LoadPlugins" (plugins)
   (nvim::redirect-output (nvim::*log-stream*)
     (dolist (plugin-file-path plugins)
@@ -58,8 +54,13 @@
     (ql:register-local-projects)
     (map NIL #'load-plugin plugins)))
 
-(setf nvim::*using-host* T
-      nvim::*log-stream* (make-broadcast-stream))
+(setf nvim::*using-host* T)
+(let ((log-file (uiop:getenv "NVIM_LISP_LOG_FILE"))
+      (log-level (uiop:getenv "NVIM_LISP_LOG_LEVEL")))
+  (if log-file
+    (nvim:enable-logging :stream (open log-file :direction :output :if-does-not-exist :create :if-exists :append)
+                         :level (if log-level (alexandria:make-keyword log-level) :info))
+    (make-broadcast-stream)))
 (nvim::redirect-output (nvim::*log-stream*)
   (handler-case (mrpc::run-forever (mrpc::event-loop nvim::*nvim-instance*))
     (error (desc)

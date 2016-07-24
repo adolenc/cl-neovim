@@ -5,7 +5,6 @@
 (setf mrpc:*extended-types* (mrpc::define-extension-types '(Buffer Window Tabpage)))
 (setf mrpc::*decoder-prefers-lists* T)
 
-(defparameter *log-stream* *standard-output*)
 (defvar *using-host* NIL "Variable that host binds to T when it loads plugins.")
 
 (defvar *specs* NIL "A list of all the specs nvim needs.")

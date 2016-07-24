@@ -16,6 +16,8 @@
            #:listen-once
            #:call/s
            #:call/a)
+  ;;; logging.lisp
+  (:export #:enable-logging)
   ;;; callbacks.lisp
   (:export #:defcommand #:defcommand/s
            #:defautocmd #:defautocmd/s

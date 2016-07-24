@@ -5,13 +5,15 @@
   :depends-on (#:babel
                #:split-sequence
                #:form-fiddle
-               #:cl-messagepack-rpc)
+               #:cl-messagepack-rpc
+               #:vom)
   :serial T
   :components ((:module "src"
                 :components ((:file "package")
                              (:file "utils")
                              (:file "vim-utils")
                              (:file "cl-neovim")
+                             (:file "logging")
                              (:file "repl")
                              (:file "callbacks")
                              (:file "interface")
