@@ -32,7 +32,9 @@
 
 (test vim-call
   (with-fixture cleanup ()
-    (is (string= "first, last" (nvim:call-function "join" '(("first" "last") ", "))))))
+    (is (string= "first, last" (nvim:call-function "join" '(("first" "last") ", "))))
+    (is (equalp '(0 1 1 0 1) (nvim:call-function "getcurpos" #())))
+    (is (equalp '(0 1 1 0 1) (nvim:call-function "getcurpos" '())))))
 
 (test vim-strwidth
   (with-fixture cleanup ()

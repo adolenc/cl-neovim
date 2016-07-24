@@ -1,7 +1,11 @@
 (in-package #:cl-neovim)
 
 
-(defvar +custom-implementation+ '(subscribe unsubscribe))
+(defparameter *custom-implementation* '(subscribe unsubscribe))
+
+(defparameter *arg-conversions*
+  '(("boolean" (or arg :false))
+    ("array"   (or arg #()))))
 
 (cl:defun parse-parameters (parameters)
   "Extract names from nvim api's metadata of arguments into a list of symbols."
@@ -17,19 +21,19 @@
          (async-fn-name (symbol-concat fn-name '/a))
          (funcalls `((,fn-name #'call/s)
                      (,async-fn-name #'call/a)))
-         (false-conversions (loop for (type _) in parameters
-                                  for name in parameter-names
-                                  when (string-equal type "boolean")
-                                    collect `(,name (or ,name :false)))))
-    (unless (find fn-name +custom-implementation+ :test #'symbol-name=)
+         (arg-conversions (loop for (type _) in parameters
+                                for name in parameter-names
+                                when (assoc type *arg-conversions* :test #'string-equal)
+                                  collect `(,name ,(subst name 'arg (first (rest (assoc type *arg-conversions* :test #'string-equal))) :test #'symbol-name=)))))
+    (unless (find fn-name *custom-implementation* :test #'symbol-name=)
       `(progn
          ,@(loop for (fn-name fn) in funcalls
                  collect (if (setterp name)
                            `(cl:defun (setf ,fn-name) (,@(last parameter-names) ,@(butlast parameter-names) ,@instance-parameter)
-                                      (let (,@false-conversions)
+                                      (let (,@arg-conversions)
                                         (funcall ,fn instance ,name ,@parameter-names)))
                            `(cl:defun ,fn-name (,@parameter-names ,@instance-parameter)
-                                      (let (,@false-conversions)
+                                      (let (,@arg-conversions)
                                         (funcall ,fn instance ,name ,@parameter-names)))))))))
 
 (cl:defun subscribe (event function &optional (instance *nvim-instance*))
