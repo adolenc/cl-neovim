@@ -23,7 +23,7 @@ curl https://raw.githubusercontent.com/luismbo/cl-travis/master/install.sh | bas
 git clone https://github.com/fukamachi/cl-coveralls $HOME/lisp/cl-coveralls
 
 # up-to-date cl-messagepack and cl-messagepack-rpc
-git clone -b ext https://github.com/adolenc/cl-messagepack $HOME/lisp/cl-messagepack
+git clone https://github.com/mbrezu/cl-messagepack $HOME/lisp/cl-messagepack
 git clone https://github.com/adolenc/cl-messagepack-rpc $HOME/lisp/cl-messagepack-rpc
 
 # neovim

@@ -1,21 +1,17 @@
 (in-package #:cl-neovim)
 
 
-;; We don't want cl-messagepack to convert alists into hash-maps
-(cl:defun mpk::alistp (l)
-  NIL)
+(setf mrpc::*encode-alist-as-map* NIL)
+(setf mrpc:*extended-types* (mrpc::define-extension-types '(Buffer Window Tabpage)))
+(setf mrpc::*decoder-prefers-lists* T)
 
 (defparameter *log-stream* *standard-output*)
 (defvar *using-host* NIL "Variable that host binds to T when it loads plugins.")
 
 (defvar *specs* NIL "A list of all the specs nvim needs.")
 (defvar *path* "" "Variable that gets set to path to plugin.")
-(defvar *nvim-types* (mrpc::define-extension-types
-                       '(0
-                         Buffer
-                         Window
-                         Tabpage)))
 (defvar *nvim-instance* NIL "Binds to the last connection to neovim")
+
 
 (defclass nvim (mrpc:client)
   ((client-id :initform NIL :reader client-id)))
@@ -34,21 +30,17 @@
         (t (error (format NIL "Could not parse $NVIM_LISTEN_ADDRESS (~A)." address)))))
 
 (cl:defun connect (&rest args &key host port file)
-  (let ((mrpc:*extended-types* *nvim-types*))
-    (setf *nvim-instance* (apply #'make-instance 'nvim (or args (parse-env-listen-address (uiop:getenv "NVIM_LISTEN_ADDRESS")))))))
+  (setf *nvim-instance* (apply #'make-instance 'nvim (or args (parse-env-listen-address (uiop:getenv "NVIM_LISTEN_ADDRESS"))))))
 
 (cl:defun connect-stdio ()
-  (let ((mrpc:*extended-types* *nvim-types*))
-    (setf *nvim-instance* (make-instance 'nvim))))
+  (setf *nvim-instance* (make-instance 'nvim)))
 
 (cl:defun listen-once (&optional (instance *nvim-instance*))
   "Block execution listening for a new message for instance."
   (mrpc::run-once (mrpc::event-loop instance)))
 
 (cl:defun %call (instance fn-type command &rest args)
-  (let ((mrpc:*extended-types* *nvim-types*)
-        (mrpc::*decoder-prefers-lists* T)
-        (instance (etypecase instance
+  (let ((instance (etypecase instance
                     ((member t) *nvim-instance*)
                     (nvim instance))))
     (apply fn-type instance command args)))
