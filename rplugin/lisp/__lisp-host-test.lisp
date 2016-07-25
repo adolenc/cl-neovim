@@ -26,5 +26,5 @@
       (progn (if (not success)
                (with-open-file (file filename :direction :output :if-does-not-exist :create :if-exists :overwrite)
                  (format file "~A" test-details)))
-             (nvim:command "qa!"))
+             (nvim:command/a "qa!"))
       (nvim:command (format nil "redraw | echo 'Lisp Host: done. Results:~%~A'" test-details)))))
