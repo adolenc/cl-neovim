@@ -4,16 +4,16 @@
 
 (test tabpage-setting-current
   (with-fixture cleanup ()
-    (is (= 1 (length (nvim:tabpage-windows (nvim:current-tabpage)))))
-    (nvim:command "tabnew")
-    (nvim:command "split")
-    (nvim:command "split")
-    (is (= 3 (length (nvim:tabpage-windows (nvim:current-tabpage)))))
-    (is (= 2 (length (nvim:tabpages))))
-    (setf (nvim:current-tabpage) (first (nvim:tabpages)))
-    (is (= 1 (length (nvim:tabpage-windows (nvim:current-tabpage)))))
-    (setf (nvim:current-tabpage) (second (nvim:tabpages)))
-    (is (= 3 (length (nvim:tabpage-windows (nvim:current-tabpage)))))))
+    (let ((tp1 (nvim:current-tabpage)))
+      (is (eq tp1 (nvim:current-tabpage)))
+      (nvim:command "tabnew")
+      (let ((tp2 (nvim:current-tabpage)))
+        (is (eq tp2 (nvim:current-tabpage)))
+        (is (not (eq tp1 (nvim:current-tabpage))))
+        (setf (nvim:current-tabpage) tp1)
+        (is (eq tp1 (nvim:current-tabpage)))
+        (setf (nvim:current-tabpage) tp2)
+        (is (eq tp2 (nvim:current-tabpage)))))))
 
 (test tabpage-vars
   (with-fixture cleanup ()
@@ -29,6 +29,19 @@
       (is-true (nvim:tabpage-valid-p tp))
       (nvim:command "tabclose")
       (is-false (nvim:tabpage-valid-p tp)))))
+
+(test tabpage-tabpages
+  (with-fixture cleanup ()
+    (let ((tp (nvim:current-tabpage)))
+      (is (= 1 (length (nvim:tabpages))))
+      (dotimes (i 5)
+        (nvim:command "tabnew"))
+      (is (= 6 (length (nvim:tabpages))))
+      (is-true (find tp (nvim:tabpages)))
+      (setf (nvim:current-tabpage) tp)
+      (nvim:command "tabclose")
+      (is (= 5 (length (nvim:tabpages))))
+      (is-false (find tp (nvim:tabpages))))))
 
 (test tabpage-window
   (with-fixture cleanup ()
