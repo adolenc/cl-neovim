@@ -41,17 +41,16 @@
 (test buffer-current-buffer
   (with-fixture cleanup ()
     (let ((b1 (nvim:current-buffer)))
-      ; to test with eql we would have to fix cl-messagepack
-      (is (= (nvim:buffer-number (nvim:current-buffer)) (nvim:buffer-number b1)))
+      (is (eq b1 (nvim:current-buffer)))
       (nvim:command "new")
-      (is (/= (nvim:buffer-number (nvim:current-buffer)) (nvim:buffer-number b1)))
+      (is (not (eq b1 (nvim:current-buffer))))
       (let ((b2 (nvim:current-buffer)))
-        (is (= (nvim:buffer-number (nvim:current-buffer)) (nvim:buffer-number b2)))
-        (is (/= (nvim:buffer-number b2) (nvim:buffer-number b1)))
+        (is (eq b2 (nvim:current-buffer)))
+        (is (not (eq b1 b2)))
         (setf (nvim:current-buffer) b1)
-        (is (= (nvim:buffer-number (nvim:current-buffer)) (nvim:buffer-number b1)))
+        (is (eq b1 (nvim:current-buffer)))
         (setf (nvim:current-buffer) b2)
-        (is (= (nvim:buffer-number (nvim:current-buffer)) (nvim:buffer-number b2)))))))
+        (is (eq b2 (nvim:current-buffer)))))))
 
 (test buffer-valid
   (with-fixture cleanup ()
@@ -63,18 +62,17 @@
 
 (test buffer-buffers
   (with-fixture cleanup ()
-    (let* ((b (nvim:current-buffer))
-           (n (nvim:buffer-number b)))
+    (let ((b (nvim:current-buffer)))
       (is (= 1 (length (nvim:buffers))))
       (dotimes (i 5)
         (nvim:command "new"))
       (is (= 6 (length (nvim:buffers))))
-      (is-true (find n (nvim:buffers) :key #'nvim:buffer-number))
+      (is-true (find b (nvim:buffers)))
       (setf (nvim:current-buffer) b)
-      (is (= n (nvim:buffer-number (nvim:current-buffer))))
+      (is (eq b (nvim:current-buffer)))
       (nvim:command "bw!")
       (is (= 5 (length (nvim:buffers))))
-      (is-false (find n (nvim:buffers) :key #'nvim:buffer-number)))))
+      (is-false (find b (nvim:buffers))))))
 
 (test buffer-line
   (with-fixture cleanup ()

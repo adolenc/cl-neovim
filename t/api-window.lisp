@@ -4,14 +4,12 @@
 
 (test window-buffer
   (with-fixture cleanup ()
-    (is (= (nvim:buffer-number (nvim:current-buffer))
-           (nvim:buffer-number (nvim:window-buffer (first (nvim:windows))))))
+    (is (eq (nvim:current-buffer) (window-buffer (first (nvim:windows)))))
     (nvim:command "new")
     (setf (nvim:current-window) (second (nvim:windows)))
-    (is (= (nvim:buffer-number (nvim:current-buffer))
-           (nvim:buffer-number (nvim:window-buffer (second (nvim:windows))))))
-    (is (/= (nvim:buffer-number (nvim:window-buffer (first (nvim:windows))))
-            (nvim:buffer-number (nvim:window-buffer (second (nvim:windows))))))))
+    (is (eq (nvim:current-buffer) (window-buffer (second (nvim:windows)))))
+    (is (not (eq (nvim:window-buffer (first (nvim:windows)))
+                 (nvim:window-buffer (second (nvim:windows))))))))
 
 (test window-cursor
   (with-fixture cleanup ()
@@ -92,11 +90,8 @@
 
 (test window-tabpage
   (with-fixture cleanup ()
-    (let ((w (nvim:current-window)))
-      (nvim:window-tabpage (nvim:current-window))
-      (is (= 1 (length (nvim:tabpage-windows (nvim:window-tabpage (nvim:current-window))))))
-      (nvim:command "tabnew")
-      (dotimes (i 5)
-        (nvim:command "split"))
-      (is (= 6 (length (nvim:tabpage-windows (nvim:window-tabpage (nvim:current-window))))))
-      (is (= 1 (length (nvim:tabpage-windows (nvim:window-tabpage w))))))))
+    (nvim:command "tabnew")
+    (nvim:command "vsplit")
+    (is (eq (first  (nvim:tabpages)) (nvim:window-tabpage (first (nvim:windows)))))
+    (is (eq (second (nvim:tabpages)) (nvim:window-tabpage (second (nvim:windows)))))
+    (is (eq (second (nvim:tabpages)) (nvim:window-tabpage (third (nvim:windows)))))))

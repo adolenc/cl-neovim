@@ -2,11 +2,11 @@
 
 
 (setf mrpc::*encode-alist-as-map* NIL)
-(setf mrpc:*extended-types* (mrpc::define-extension-types '(Buffer Window Tabpage)))
 (setf mrpc::*decoder-prefers-lists* T)
 
 (defvar *using-host* NIL "Variable that host binds to T when it loads plugins.")
 
+(defvar *nvim-extended-types* '(Buffer Window Tabpage))
 (defvar *specs* NIL "A list of all the specs nvim needs.")
 (defvar *path* "" "Variable that gets set to path to plugin.")
 (defvar *nvim-instance* NIL "Binds to the last connection to neovim")
@@ -29,10 +29,12 @@
         (t (error (format NIL "Could not parse $NVIM_LISTEN_ADDRESS (~A)." address)))))
 
 (cl:defun connect (&rest args &key host port file)
-  (setf *nvim-instance* (apply #'make-instance 'nvim (or args (parse-env-listen-address (uiop:getenv "NVIM_LISTEN_ADDRESS"))))))
+  (setf *nvim-instance* (apply #'make-instance 'nvim
+                               :extended-types *nvim-extended-types*
+                               (or args (parse-env-listen-address (uiop:getenv "NVIM_LISTEN_ADDRESS"))))))
 
 (cl:defun connect-stdio ()
-  (setf *nvim-instance* (make-instance 'nvim)))
+  (setf *nvim-instance* (make-instance 'nvim :extended-types *nvim-extended-types*)))
 
 (cl:defun listen-once (&optional (instance *nvim-instance*))
   "Block execution listening for a new message for instance."
