@@ -1,7 +1,7 @@
 (in-package :cl-user)
 (defpackage #:lisp-interface
   (:use #:cl))
-(in-package :lisp-interface)
+(in-package #:lisp-interface)
 
 
 (defmacro echo-output (&body forms)
@@ -36,7 +36,7 @@
                                (loop for line-nr from start upto end collect (1+ line-nr)))))
         (setf (nvim:buffer-lines (nvim:current-buffer) start end T) new-lines)))))
 
-(nvim:defcommand/s lispfile (filename &opts range)
+(nvim:defcommand/s lispfile (filename)
   (declare (opts (complete "file")))
   (echo-output (load filename)))
 
