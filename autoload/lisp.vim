@@ -15,11 +15,17 @@ function! lisp#GetImplementationCmd()
     let implementation = "sbcl"
   endif
 
+  if exists('g:lisp_host_quicklisp_setup')
+    let quicklisp = expand(g:lisp_host_quicklisp_setup)
+  else
+    let quicklisp = expand("~/quicklisp/setup.lisp")
+  endif
+
   if type(implementation) == type("")
     " For the most common implementations, user shouldn't have to specify all
     " the arguments in a list, but just the name of the implementation as a
     " string.
-    let implementation_cmds = {"sbcl": ["sbcl", "--noinform", "--disable-debugger", "--load", expand("~/quicklisp/setup.lisp"), "--load", lisp#LispHostScript()]}
+    let implementation_cmds = {"sbcl": ["sbcl", "--noinform", "--disable-debugger", "--load", quicklisp, "--load", lisp#LispHostScript()]}
     let implementation_cmd = implementation_cmds[implementation]
   else
     let implementation_cmd = implementation
