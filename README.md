@@ -23,6 +23,8 @@ The previous step only installed cl-neovim for usage from the REPL. The easiest 
 
 into your init.vim, run `:PlugInstall` from within Neovim, restart Neovim and run `:UpdateRemotePlugins`. If everything worked correctly, calling `:Lisp (print 42)` command (after restarting one more time) should output `42` into your prompt.
 
+If you are having trouble getting the host to work, and if you are using latest version of Neovim (≥ v0.1.5), you can call `:CheckHealth lisp` command from Neovim, which should help you debug your problems.
+
 ## Using the package
 To use the package from the REPL, first run Neovim and make it listen to some address:
 
