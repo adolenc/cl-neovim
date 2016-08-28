@@ -9,5 +9,5 @@ if [[ "${TEST_TARGET}" == repl ]]; then
   nvim --headless -i NONE -N -n & export NVIM_PID=$!
 else
   nvim --headless -i NONE -N -n -c "UpdateRemotePlugins" -c "q"
-  cat "${HOME}/.config/nvim/.init.vim-rplugin~"
+  cat "${HOME}/.local/share/nvim/rplugin.vim"
 fi
