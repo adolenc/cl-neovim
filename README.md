@@ -10,14 +10,11 @@ cl-neovim is a [Neovim](http://neovim.io/) client library for writing Neovim plu
 ## Installation
 Prerequisites for cl-neovim are `SBCL` along with [Quicklisp](https://www.quicklisp.org/), and `libuv1-dev`, which you should be able to install with your package manager or by manually compiling [libuv](https://github.com/libuv/libuv#build-instructions).
 
-For now you will also need to manually install latest versions of [cl-messagepack](https://github.com/mbrezu/cl-messagepack) and [cl-messagepack-rpc](https://github.com/adolenc/cl-messagepack-rpc), which you can do by cloning the repositories into your `~/quicklisp/local-projects` folder:
+cl-neovim is available from Quicklisp, so simply evaluating
 
-    $ git clone https://github.com/mbrezu/cl-messagepack ~/quicklisp/local-projects/cl-messagepack/
-    $ git clone https://github.com/adolenc/cl-messagepack-rpc ~/quicklisp/local-projects/cl-messagepack-rpc/
+    * (ql:quickload :cl-neovim)
 
-To install cl-neovim itself you have to clone this repository into your `~/quicklisp/local-projects` folder as well:
-
-    $ git clone https://github.com/adolenc/cl-neovim ~/quicklisp/local-projects/cl-neovim/
+from your SBCL repl should properly load it and all the remaining dependencies.
 
 #### Installing plugin host
 The previous step only installed cl-neovim for usage from the REPL. The easiest way to also install lisp host (required to use plugins written in Common Lisp) is to use [vim-plug](https://github.com/junegunn/vim-plug). Add
