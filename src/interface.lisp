@@ -23,15 +23,18 @@
                                 for name in parameter-names
                                 when (assoc type *arg-conversions* :test #'string-equal)
                                   collect `(,name ,(subst name 'arg (rest (assoc type *arg-conversions* :test #'string-equal)) :test #'symbol-name=)))))
-    (unless (find fn-name *custom-implementation* :test #'symbol-name=)
-      (loop for (fn-name fn) in funcalls
-            collect (if (setterp name)
-                      `(cl:defun (setf ,fn-name) (,@(last parameter-names) ,@(butlast parameter-names) ,@instance-parameter)
-                         (let (,@arg-conversions)
-                           (,fn instance ,name ,@parameter-names)))
-                      `(cl:defun ,fn-name (,@parameter-names ,@instance-parameter)
-                         (let (,@arg-conversions)
-                           (,fn instance ,name ,@parameter-names))))))))
+    (loop for (fn-name fn) in funcalls
+          collect (if (setterp name)
+                    `(cl:defun (setf ,fn-name) (,@(last parameter-names) ,@(butlast parameter-names) ,@instance-parameter)
+                       ,(if arg-conversions
+                          `(let (,@arg-conversions)
+                             (,fn instance ,name ,@parameter-names))
+                          `(,fn instance ,name ,@parameter-names)))
+                    `(cl:defun ,fn-name (,@parameter-names ,@instance-parameter)
+                       ,(if arg-conversions
+                          `(let (,@arg-conversions)
+                             (,fn instance ,name ,@parameter-names))
+                          `(,fn instance ,name ,@parameter-names)))))))
 
 (cl:defun subscribe (event function &optional (instance *nvim-instance*))
   (mrpc:register-callback instance event function)
