@@ -14,15 +14,21 @@
 
 (cl:defun setterp (name)
   "Is name a setter?"
-  (member "set" (split-sequence #\_ name) :test #'string=))
+  (and (member "set" (split-sequence #\_ name) :test #'string=) T))
 
 (cl:defun predicatep (name)
   "Is name a predicate?"
-  (member "is" (split-sequence #\_ name) :test #'string=))
+  (and (member "is" (split-sequence #\_ name) :test #'string=) T))
 
-(cl:defun clean-up-name (name &optional (modifiers '("vim" "get" "set" "is")))
-  "Removes all substrings specified in modifiers from name."
-  (let* ((components (split-sequence #\_ name))
-         (main-components (remove-if #'(lambda (c) (member c modifiers :test #'string=)) components))
-         (suffix (if (predicatep name) "_p" "")))
-    (format nil "~{~A~^_~}~A" main-components suffix)))
+(cl:defun clean-up-name (name &optional
+                              (modifiers '("vim" "nvim" "get" "set" "is" "list"))
+                              (replacements '(("buf" "buffer") ("win" "window") ("bufs" "buffers") ("wins" "windows"))))
+  "Removes all substrings specified in modifiers from name and applies all
+   replacements."
+  (let ((components (split-sequence #\_ name)))
+    (setf components (remove-if #'(lambda (c) (member c modifiers :test #'string=)) components))
+    (loop for (old new) in replacements
+          do (setf components (substitute new old components :test #'string=)))
+    (if (predicatep name)
+      (setf components (append components '("p"))))
+    (format nil "~{~A~^_~}" components)))

@@ -71,9 +71,9 @@
 
 (test vim-runtime-paths
   (with-fixture cleanup ()
-    (is (<= 1 (length (nvim:list-runtime-paths))))
+    (is (<= 1 (length (nvim:runtime-paths))))
     (is-true (find (nvim:eval "expand('$HOME/.config/nvim')")
-                   (nvim:list-runtime-paths)
+                   (nvim:runtime-paths)
                    :test #'string=))))
 
 (test vim-colors
@@ -117,7 +117,7 @@
   (with-fixture cleanup ()
     (destructuring-bind (channel metadata) (nvim:api-info)
       (is (<= 0 channel))
-      (is (equal '("error_types" "functions" "types")
+      (is (equal '("error_types" "functions" "types" "version")
                  (sort (alexandria:hash-table-keys metadata) #'string<))))))
 
 (test vim-buffers

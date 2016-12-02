@@ -18,5 +18,6 @@
                              (:file "repl")
                              (:file "callbacks")
                              (:file "interface")
-                             (:file "api"))))
+                             (:file "api")
+                             (:file "generated-api"))))
   :in-order-to ((test-op (test-op cl-neovim-tests))))

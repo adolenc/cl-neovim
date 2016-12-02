@@ -14,6 +14,9 @@
   (and (symbolp symbol1) (symbolp symbol2)
        (string= (symbol-name symbol1) (symbol-name symbol2))))
 
+(cl:defun zip (&rest lists)
+  (apply #'mapcar #'list lists))
+
 (cl:defun mklst (obj)
   (if (listp obj) obj (list obj)))
 
