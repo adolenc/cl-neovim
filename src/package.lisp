@@ -25,6 +25,7 @@
   ;;; interface.lisp
   (:export #:buffer-number  #:buffer-number/a
            #:subscribe      #:subscribe/a
-           #:unsubscribe    #:unsubscribe/a)
+           #:unsubscribe    #:unsubscribe/a
+           #:call-atomic)
   ;;; see also generated-api.lisp
   )

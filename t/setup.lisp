@@ -5,6 +5,7 @@
 (def-suite api-buffer-test-suite :description "Test suite for cl-neovim buffer api")
 (def-suite api-window-test-suite :description "Test suite for cl-neovim window api")
 (def-suite api-tabpage-test-suite :description "Test suite for cl-neovim tabpage api")
+(def-suite api-other-test-suite :description "Test suite for the rest of cl-neovim api")
 
 
 (unless nvim::*using-host*

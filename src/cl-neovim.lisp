@@ -11,6 +11,9 @@
 (defvar *path* "" "Variable that gets set to path to plugin.")
 (defvar *nvim-instance* NIL "Binds to the last connection to neovim")
 
+(defparameter *should-capture-calls* NIL "Don't forward calls to neovim and instead store them into *captured-calls*.")
+(defparameter *captured-calls* NIL "Calls captured when *should-capture-calls* is T.")
+
 
 (defclass nvim (mrpc:client)
   ((client-id :initform NIL :reader client-id)))
@@ -41,10 +44,12 @@
   (mrpc::run-once (mrpc::event-loop instance)))
 
 (cl:defun %call (instance fn-type command &rest args)
-  (let ((instance (etypecase instance
-                    ((member t) *nvim-instance*)
-                    (nvim instance))))
-    (apply fn-type instance command args)))
+  (if *should-capture-calls*
+    (push (list command (or args #())) *captured-calls*)
+    (let ((instance (etypecase instance
+                      ((member t) *nvim-instance*)
+                      (nvim instance))))
+      (apply fn-type instance command args))))
 
 (cl:defun call/s (instance command &rest args)
   "Send nvim command to neovim socket and return the result."
