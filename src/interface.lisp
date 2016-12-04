@@ -1,7 +1,7 @@
 (in-package #:cl-neovim)
 
 
-(defparameter *manual-implementation* '(subscribe unsubscribe call-atomic))
+(defparameter *manual-implementation* '(subscribe unsubscribe call-atomic buffer-number))
 
 (defparameter *arg-conversions*
   '(("boolean" . (or arg :false))
@@ -35,6 +35,14 @@
                           `(let (,@arg-conversions)
                              (,fn instance ,name ,@parameter-names))
                           `(,fn instance ,name ,@parameter-names)))))))
+
+(cl:defun buffer-number (buffer &optional (instance *nvim-instance*))
+  (declare (ignore instance))
+  (mpk::decode (mpk::extension-type-id buffer)))
+
+(cl:defun buffer-number/a (buffer &optional (instance *nvim-instance*))
+  (declare (ignore instance))
+  (mpk::decode (mpk::extension-type-id buffer)))
 
 (cl:defun subscribe (event function &optional (instance *nvim-instance*))
   (mrpc:register-callback instance event function)

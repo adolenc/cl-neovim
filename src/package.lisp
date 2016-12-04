@@ -23,7 +23,8 @@
            #:defautocmd #:defautocmd/s
            #:defun      #:defun/s)
   ;;; interface.lisp
-  (:export #:subscribe  #:subscribe/a
-           #:unsubscribe  #:unsubscribe/a)
+  (:export #:buffer-number  #:buffer-number/a
+           #:subscribe      #:subscribe/a
+           #:unsubscribe    #:unsubscribe/a)
   ;;; see also generated-api.lisp
   )

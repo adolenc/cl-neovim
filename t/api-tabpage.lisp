@@ -30,6 +30,14 @@
       (nvim:command "tabclose")
       (is-false (nvim:tabpage-valid-p tp)))))
 
+(test tabpage-number
+  (with-fixture cleanup ()
+    (let ((current-number (nvim:tabpage-number (nvim:current-tabpage))))
+      (nvim:command "tabnew")
+      (is (= (+ 1 current-number) (nvim:tabpage-number (nvim:current-tabpage))))
+      (nvim:command "tabnew")
+      (is (= (+ 2 current-number) (nvim:tabpage-number (nvim:current-tabpage)))))))
+
 (test tabpage-tabpages
   (with-fixture cleanup ()
     (let ((tp (nvim:current-tabpage)))

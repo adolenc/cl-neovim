@@ -53,7 +53,6 @@
       (is (equal '((1) "2" (3 4)) (nvim:window-var w "lisp")))
       (is (equal '((1) "2" (3 4)) (nvim:eval "w:lisp"))))))
 
-
 (test window-options
   (with-fixture cleanup ()
     (let ((w (nvim:current-window)))
@@ -62,6 +61,14 @@
       (setf (nvim:window-option w "statusline") "window-status")
       (is (equal "window-status" (nvim:window-option w "statusline")))
       (is (string= "" (nvim:option "statusline"))))))
+
+(test window-number
+  (with-fixture cleanup ()
+    (let ((current-number (nvim:window-number (nvim:current-window))))
+      (nvim:command "bot split")
+      (is (= (+ 1 current-number) (nvim:window-number (nvim:current-window))))
+      (nvim:command "bot split")
+      (is (= (+ 2 current-number) (nvim:window-number (nvim:current-window)))))))
 
 (test window-position
   (with-fixture cleanup ()

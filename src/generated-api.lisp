@@ -84,14 +84,6 @@
   (CALL/A INSTANCE "nvim_buf_set_option" BUFFER NAME VALUE))
 
 
-(COMMON-LISP:DEFUN BUFFER-NUMBER (BUFFER &OPTIONAL (INSTANCE *NVIM-INSTANCE*))
-  (CALL/S INSTANCE "nvim_buf_get_number" BUFFER))
-
-(COMMON-LISP:DEFUN BUFFER-NUMBER/A
-                   (BUFFER &OPTIONAL (INSTANCE *NVIM-INSTANCE*))
-  (CALL/A INSTANCE "nvim_buf_get_number" BUFFER))
-
-
 (COMMON-LISP:DEFUN BUFFER-NAME (BUFFER &OPTIONAL (INSTANCE *NVIM-INSTANCE*))
   (CALL/S INSTANCE "nvim_buf_get_name" BUFFER))
 
@@ -746,8 +738,8 @@
 
 
 (export '(BUFFER-LINE-COUNT BUFFER-LINES BUFFER-VAR BUFFER-DEL-VAR
-                            BUFFER-OPTION BUFFER-NUMBER BUFFER-NAME
-                            BUFFER-VALID-P BUFFER-MARK BUFFER-ADD-HIGHLIGHT
+                            BUFFER-OPTION BUFFER-NAME BUFFER-VALID-P
+                            BUFFER-MARK BUFFER-ADD-HIGHLIGHT
                             BUFFER-CLEAR-HIGHLIGHT TABPAGE-WINDOWS TABPAGE-VAR
                             TABPAGE-DEL-VAR TABPAGE-WINDOW TABPAGE-NUMBER
                             TABPAGE-VALID-P UI-ATTACH UI-DETACH UI-TRY-RESIZE
@@ -765,23 +757,23 @@
                             BUFFER-INSERT CHANGE-DIRECTORY REPORT-ERROR
                             NAME-TO-COLOR))
 (export '(BUFFER-LINE-COUNT/A BUFFER-LINES/A BUFFER-VAR/A BUFFER-DEL-VAR/A
-                              BUFFER-OPTION/A BUFFER-NUMBER/A BUFFER-NAME/A
-                              BUFFER-VALID-P/A BUFFER-MARK/A
-                              BUFFER-ADD-HIGHLIGHT/A BUFFER-CLEAR-HIGHLIGHT/A
-                              TABPAGE-WINDOWS/A TABPAGE-VAR/A TABPAGE-DEL-VAR/A
-                              TABPAGE-WINDOW/A TABPAGE-NUMBER/A
-                              TABPAGE-VALID-P/A UI-ATTACH/A UI-DETACH/A
-                              UI-TRY-RESIZE/A UI-OPTION/A COMMAND/A FEEDKEYS/A
-                              INPUT/A REPLACE-TERMCODES/A COMMAND-OUTPUT/A
-                              EVAL/A CALL-FUNCTION/A STRWIDTH/A RUNTIME-PATHS/A
-                              CURRENT-DIR/A CURRENT-LINE/A DEL-CURRENT-LINE/A
-                              VAR/A DEL-VAR/A VVAR/A OPTION/A OUT-WRITE/A
-                              ERR-WRITE/A ERR-WRITELN/A BUFFERS/A
-                              CURRENT-BUFFER/A WINDOWS/A CURRENT-WINDOW/A
-                              TABPAGES/A CURRENT-TABPAGE/A COLOR-BY-NAME/A
-                              COLOR-MAP/A API-INFO/A WINDOW-BUFFER/A
-                              WINDOW-CURSOR/A WINDOW-HEIGHT/A WINDOW-WIDTH/A
-                              WINDOW-VAR/A WINDOW-DEL-VAR/A WINDOW-OPTION/A
+                              BUFFER-OPTION/A BUFFER-NAME/A BUFFER-VALID-P/A
+                              BUFFER-MARK/A BUFFER-ADD-HIGHLIGHT/A
+                              BUFFER-CLEAR-HIGHLIGHT/A TABPAGE-WINDOWS/A
+                              TABPAGE-VAR/A TABPAGE-DEL-VAR/A TABPAGE-WINDOW/A
+                              TABPAGE-NUMBER/A TABPAGE-VALID-P/A UI-ATTACH/A
+                              UI-DETACH/A UI-TRY-RESIZE/A UI-OPTION/A COMMAND/A
+                              FEEDKEYS/A INPUT/A REPLACE-TERMCODES/A
+                              COMMAND-OUTPUT/A EVAL/A CALL-FUNCTION/A
+                              STRWIDTH/A RUNTIME-PATHS/A CURRENT-DIR/A
+                              CURRENT-LINE/A DEL-CURRENT-LINE/A VAR/A DEL-VAR/A
+                              VVAR/A OPTION/A OUT-WRITE/A ERR-WRITE/A
+                              ERR-WRITELN/A BUFFERS/A CURRENT-BUFFER/A
+                              WINDOWS/A CURRENT-WINDOW/A TABPAGES/A
+                              CURRENT-TABPAGE/A COLOR-BY-NAME/A COLOR-MAP/A
+                              API-INFO/A WINDOW-BUFFER/A WINDOW-CURSOR/A
+                              WINDOW-HEIGHT/A WINDOW-WIDTH/A WINDOW-VAR/A
+                              WINDOW-DEL-VAR/A WINDOW-OPTION/A
                               WINDOW-POSITION/A WINDOW-TABPAGE/A
                               WINDOW-NUMBER/A WINDOW-VALID-P/A BUFFER-LINE/A
                               BUFFER-DEL-LINE/A BUFFER-LINE-SLICE/A
