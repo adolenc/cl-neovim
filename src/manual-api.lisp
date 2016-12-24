@@ -32,6 +32,9 @@
                                           (*captured-calls* (list)))
                                       ,@body
                                       (reverse *captured-calls*)))
-     (if err
-       (error 'mrpc:rpc-error :message err)
-       results)))
+
+     (restart-case
+         (when err
+           (error 'mrpc:rpc-error :message err))
+       (continue () results))
+     results))
