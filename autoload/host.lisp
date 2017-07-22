@@ -40,14 +40,11 @@
                              (push (cons path spec) *loaded-plugin-specs*))))
       (error (desc)
          (format t "Failed to load plugin `~A':~%~A" path desc)
-         (nvim:command (format nil "echo 'Failed to load lisp plugin ~A:~%~A'" path desc))))))
+         (nvim:command (format nil "echo 'Failed to load lisp plugin ~A:~%~A'" path (substitute #\` #\' (format nil "~A" desc))))))))
 
 (def-nvim-mrpc-cb "specs" (path)
-  ; Either the plugin was already loaded in which case the specs should be available, or we need to load it
-  (or (rest (assoc path *loaded-plugin-specs* :test #'equal))
-      (let ((nvim::*specs* '()))
-        (load-plugin path)
-        nvim::*specs*)))
+  ; We always preload the plugins via LoadPlugins rpc call so specs are already available
+  (rest (assoc path *loaded-plugin-specs* :test #'equal)))
 
 (def-nvim-mrpc-cb "Poll" ()
   "ok")
