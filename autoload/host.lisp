@@ -1,7 +1,13 @@
+(defvar *here* #.(namestring (or *compile-file-pathname* *load-pathname* *default-pathname-defaults*)))
+
 (with-open-stream (*standard-output* (make-broadcast-stream)) ; make quicklisp quiet about fetching packages
   (let ((*trace-output* *standard-output*)
         (*error-output* *standard-output*)
         (*debug-io* *standard-output*)) ; cffi is too chatty on *debug-io*
+    (when *here*
+      (let ((plugin-dir (subseq *current-dir* 0 (1+ (search "/autoload/" *here* :from-end T)))))
+        (push plugin-dir asdf:*central-registry*))
+      (ql:register-local-projects))
     (ql:quickload :cl-neovim :silent T)))
 
 (defmacro def-nvim-mrpc-cb (name args &body body)
@@ -57,10 +63,10 @@
 (setf nvim::*using-host* T)
 (let ((log-file (uiop:getenv "NVIM_LISP_LOG_FILE"))
       (log-level (uiop:getenv "NVIM_LISP_LOG_LEVEL")))
-  (if log-file
+  (when log-file
     (nvim:enable-logging :stream (open log-file :direction :output :if-does-not-exist :create :if-exists :append)
                          :level (if log-level (alexandria:make-keyword log-level) :info))
-    (make-broadcast-stream)))
+    (format nvim::*log-stream* "Loaded cl-neovim from ~A~%" (asdf:system-source-directory :cl-neovim))))
 (nvim::redirect-output (nvim::*log-stream*)
   (handler-case (mrpc::run-forever (mrpc::event-loop nvim::*nvim-instance*))
     (error (desc)
