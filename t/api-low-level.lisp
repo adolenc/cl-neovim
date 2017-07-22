@@ -19,7 +19,7 @@
 
 (test generating-api
   (let ((api (nvim::retrieve-api)))
-    (is (equal '("error_types" "functions" "types" "version")
+    (is (equal '("error_types" "functions" "types" "ui_events" "version")
                (sort (alexandria:hash-table-keys api) #'string<)))
     (let ((function-metadata (nvim::parse-api api)))
       (is (every #'(lambda (mdata)

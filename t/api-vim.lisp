@@ -117,7 +117,7 @@
   (with-fixture cleanup ()
     (destructuring-bind (channel metadata) (nvim:api-info)
       (is (<= 0 channel))
-      (is (equal '("error_types" "functions" "types" "version")
+      (is (equal '("error_types" "functions" "types" "ui_events" "version")
                  (sort (alexandria:hash-table-keys metadata) #'string<))))))
 
 (test vim-buffers
