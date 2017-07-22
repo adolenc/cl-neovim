@@ -26,7 +26,7 @@
   (%call% instance "vim_unsubscribe" event)
   (mrpc:remove-callback instance event))
 
-(defmacro call-atomic ((&optional (instance *nvim-instance*)) &rest body)
+(defmacro call-atomic ((&optional (instance T)) &rest body)
   `(destructuring-bind (results err)
                        (nvim:call/s ,instance "nvim_call_atomic"
                                     (let ((*should-capture-calls* T)
