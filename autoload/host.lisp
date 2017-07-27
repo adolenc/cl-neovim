@@ -5,8 +5,8 @@
         (*error-output* *standard-output*)
         (*debug-io* *standard-output*)) ; cffi is too chatty on *debug-io*
     (when *here*
-      (let ((plugin-dir (subseq *current-dir* 0 (1+ (search "/autoload/" *here* :from-end T)))))
-        (push plugin-dir asdf:*central-registry*))
+      (let ((plugin-dir (subseq *here* 0 (1+ (search "/autoload/" *here* :from-end T)))))
+        (pushnew plugin-dir asdf:*central-registry*))
       (ql:register-local-projects))
     (ql:quickload :cl-neovim :silent T)))
 
@@ -52,8 +52,8 @@
 (def-nvim-mrpc-cb "LoadPlugins" (plugins)
   (nvim::redirect-output (nvim::*log-stream*)
     (dolist (plugin-file-path plugins)
-      (let ((plugin-path (subseq plugin-file-path 0 (search "rplugin/lisp/" plugin-file-path))))
-        (push plugin-path asdf:*central-registry*)))
+      (let ((plugin-path (subseq plugin-file-path 0 (1+ (search "/rplugin/lisp/" plugin-file-path :from-end T)))))
+        (pushnew plugin-path asdf:*central-registry*)))
     (ql:register-local-projects)
     (map NIL #'load-plugin plugins)))
 
