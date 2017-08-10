@@ -26,6 +26,13 @@
   (%call% instance "vim_unsubscribe" event)
   (mrpc:remove-callback instance event))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (cl:defun funcall (fn &rest args)
+    (nvim:call/s *nvim-instance* "vim_call_function" fn (or args #())))
+
+  (cl:defun funcall/a (fn &rest args)
+    (nvim:call/a *nvim-instance* "vim_call_function" fn (or args #()))))
+
 (defmacro call-atomic ((&optional (instance T)) &rest body)
   `(destructuring-bind (results err)
                        (nvim:call/s ,instance "nvim_call_atomic"

@@ -7,6 +7,7 @@
         #:form-fiddle
         #:split-sequence)
   (:shadow #:defun
+           #:funcall
            #:eval
            #:connect)
 
@@ -26,6 +27,7 @@
   (:export #:buffer-number  #:buffer-number/a
            #:subscribe      #:subscribe/a
            #:unsubscribe    #:unsubscribe/a
+           #:funcall        #:funcall/a
            #:call-atomic)
   ;;; generated-api.lisp
   (:export #:buffer-line-count #:buffer-lines #:buffer-var #:buffer-del-var #:buffer-option #:buffer-name #:buffer-valid-p #:buffer-mark #:buffer-add-highlight #:buffer-clear-highlight #:tabpage-windows #:tabpage-var #:tabpage-del-var #:tabpage-window #:tabpage-number #:tabpage-valid-p #:ui-attach #:ui-detach #:ui-try-resize #:ui-option #:command #:feedkeys #:input #:replace-termcodes #:command-output #:eval #:call-function #:strwidth #:runtime-paths #:current-dir #:current-line #:del-current-line #:var #:del-var #:vvar #:option #:out-write #:err-write #:err-writeln #:buffers #:current-buffer #:windows #:current-window #:tabpages #:current-tabpage #:color-by-name #:color-map #:api-info #:window-buffer #:window-cursor #:window-height #:window-width #:window-var #:window-del-var #:window-option #:window-position #:window-tabpage #:window-number #:window-valid-p #:buffer-line #:buffer-del-line #:buffer-line-slice #:buffer-insert #:change-directory #:report-error #:name-to-color)

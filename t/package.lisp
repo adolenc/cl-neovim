@@ -4,4 +4,4 @@
   (:use #:cl
         #:fiveam
         #:cl-neovim)
-  (:shadowing-import-from #:cl #:defun #:eval))
+  (:shadowing-import-from #:cl #:defun #:eval #:funcall))

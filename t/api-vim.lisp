@@ -36,6 +36,11 @@
     (is (equalp '(0 1 1 0 1) (nvim:call-function "getcurpos" #())))
     (is (equalp '(0 1 1 0 1) (nvim:call-function "getcurpos" '())))))
 
+(test vim-funcall
+  (with-fixture cleanup ()
+    (is (string= "first, last" (nvim:funcall "join" '("first" "last") ", ")))
+    (is (equalp '(0 1 1 0 1) (nvim:funcall "getcurpos")))))
+
 (test vim-strwidth
   (with-fixture cleanup ()
     (is (= 3 (nvim:strwidth "abc")))
