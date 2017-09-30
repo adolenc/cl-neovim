@@ -37,7 +37,7 @@
                                (or args (parse-env-listen-address (uiop:getenv "NVIM_LISTEN_ADDRESS"))))))
 
 (cl:defun connect-stdio ()
-  (setf *nvim-instance* (make-instance 'nvim :extended-types *nvim-extended-types*)))
+  (setf *nvim-instance* (make-instance 'nvim :extended-types *nvim-extended-types* :pooling-rate 0.000001)))
 
 (cl:defun listen-once (&optional (instance *nvim-instance*))
   "Block execution listening for a new message for instance."
