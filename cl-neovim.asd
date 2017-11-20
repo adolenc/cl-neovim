@@ -9,6 +9,7 @@
                #:vom)
   :serial T
   :components ((:module "src"
+                :serial T
                 :components ((:file "package")
                              (:file "utils")
                              (:file "vim-utils")
