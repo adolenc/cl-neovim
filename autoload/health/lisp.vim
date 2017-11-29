@@ -6,7 +6,7 @@ function! s:check_g_lisp_host_prog() abort
     call health#report_warn('g:lisp_host_prog is bound to ' . g:lisp_host_prog . '. Unable to run remaining health checks.')
     return 1
   endif
-  return 'Using default bindings ("sbcl") for g:lisp_host_prog.'
+  return "Using default bindings ('sbcl') for g:lisp_host_prog."
 endfunction
 
 function! s:check_lisp_bin() abort
@@ -25,22 +25,22 @@ function! s:check_lisp_bin() abort
   else
     let lisp_bin_version = systemlist(['sbcl', '--version'])[0]
   endif
-  return "Found SBCL version `" . lisp_bin_version . "' at `" . lisp_bin . "'."
+  return 'Found SBCL version `' . lisp_bin_version . '` at `' . lisp_bin . '`.'
 endfunction
 
 function! s:check_quicklisp() abort
   " Check that quicklisp is installed and can be loaded when SBCL starts
   let quicklisp_suggestions = ['Please install Quicklisp by following installation instructions on https://www.quicklisp.org/ .',
-                              \"If you installed Quicklisp to a non-default directory, set g:lisp_host_quicklisp_setup to the location of Quicklisp's `setup.lisp' file; e.g. the default is: let g:lisp_host_quicklisp_setup='~/quicklisp/setup.lisp'."]
+                              \"If you installed Quicklisp to a non-default directory, set g:lisp_host_quicklisp_setup to the location of Quicklisp's `setup.lisp` file; e.g. the default is: let g:lisp_host_quicklisp_setup='~/quicklisp/setup.lisp'."]
 
   if exists('g:lisp_host_quicklisp_setup')
-    call health#report_info("g:lisp_host_quicklisp_setup is bound to `" . g:lisp_host_quicklisp_setup . "'.")
+    call health#report_info('g:lisp_host_quicklisp_setup is bound to `' . g:lisp_host_quicklisp_setup . '`.')
     let s:quicklisp_setup = expand(g:lisp_host_quicklisp_setup)
   endif
-  call health#report_info("Loading Quicklisp from `" . s:quicklisp_setup . "'.")
+  call health#report_info('Loading Quicklisp from `' . s:quicklisp_setup . '`.')
 
   if !filereadable(s:quicklisp_setup)
-    call health#report_error("File `" . s:quicklisp_setup . "' either doesn't exist or is not readable.",
+    call health#report_error('File `' . s:quicklisp_setup . '` either doesn't exist or is not readable.',
                             \quicklisp_suggestions)
     return 1
   endif
