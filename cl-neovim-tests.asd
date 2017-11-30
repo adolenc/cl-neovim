@@ -6,6 +6,7 @@
                #:fiveam)
   :serial T
   :components ((:module "t"
+                :serial T
                 :components ((:file "package")
                              (:file "setup")
                              (:file "api-low-level")
