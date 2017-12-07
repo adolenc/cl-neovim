@@ -1,4 +1,4 @@
-language: lisp
+language: common-lisp
 sudo: required
 
 cache:
@@ -20,7 +20,8 @@ env:
     - NVIM_LISTEN_ADDRESS=/tmp/nvim
     - NVIM_LOG_FILE=/tmp/nvim_log
     - NVIM_LISP_LOG_FILE=/tmp/nvim_lisp_log
-    - LISP=sbcl
+    - LISP=sbcl-bin
+    - PATH=~/.roswell/bin:$PATH
   matrix:
     - TEST_TARGET=repl COVERALLS=true
     - TEST_TARGET=host

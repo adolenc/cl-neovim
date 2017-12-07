@@ -14,14 +14,14 @@ if [[ "${TEST_TARGET}" == host ]]; then
     exit 1
   fi
 else
-  cl -l fiveam -l cl-coveralls \
-     -e '(setf fiveam:*debug-on-error* t
-               fiveam:*debug-on-failure* t)' \
-     -e '(setf *debugger-hook*
-               (lambda (c h)
-                 (declare (ignore c h))
-                 (uiop:quit -1)))' \
-     -e '(coveralls:with-coveralls (:exclude (list "t"))
-           (ql:quickload :cl-neovim-tests)
-           (asdf:test-system :cl-neovim :force T))'
+  ros -s fiveam -s cl-coveralls \
+      -e '(setf fiveam:*debug-on-error* t
+                fiveam:*debug-on-failure* t)' \
+      -e '(setf *debugger-hook*
+                (lambda (c h)
+                  (declare (ignore c h))
+                  (uiop:quit -1)))' \
+      -e '(coveralls:with-coveralls (:exclude (list "t"))
+            (ql:quickload :cl-neovim-tests)
+            (asdf:test-system :cl-neovim :force T))'
 fi

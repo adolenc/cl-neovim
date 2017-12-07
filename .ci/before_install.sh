@@ -16,8 +16,8 @@ fi
 cd $HOME/libuv-v1.9.1
 sudo make install
 
-# cl-travis
-curl https://raw.githubusercontent.com/luismbo/cl-travis/master/install.sh | bash
+# roswell
+curl -L https://raw.githubusercontent.com/snmsts/roswell/release/scripts/install-for-ci.sh | sh
 
 # support for coveralls
 git clone https://github.com/fukamachi/cl-coveralls $HOME/lisp/cl-coveralls
