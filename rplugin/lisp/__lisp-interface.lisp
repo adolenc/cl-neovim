@@ -9,7 +9,7 @@
     `(let ((,output (with-output-to-string (*standard-output*)
                      ,@forms)))
        (when (> (length ,output) 0)
-         (nvim:command (format nil "echo '~A'" ,output))))))
+         (nvim:out-write (format nil "~A~&" ,output))))))
 
 (defun eval-string (str)
   (eval (read-from-string str)))
