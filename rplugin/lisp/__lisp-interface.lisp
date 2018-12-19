@@ -14,6 +14,9 @@
 (defun eval-string (str)
   (eval (read-from-string str)))
 
+(nvim:defun/s lispeval (form)
+  (declare (type string form))
+  (eval-string form))
 
 (nvim:defcommand/s lisp (&rest form)
   (echo-output (eval-string (format nil "~{~A~^ ~}" form))))
