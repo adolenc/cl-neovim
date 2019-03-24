@@ -40,7 +40,7 @@ function! s:check_quicklisp() abort
   call health#report_info('Loading Quicklisp from `' . s:quicklisp_setup . '`.')
 
   if !filereadable(s:quicklisp_setup)
-    call health#report_error('File `' . s:quicklisp_setup . '` either doesn't exist or is not readable.',
+    call health#report_error('File `' . s:quicklisp_setup . "` either doesn't exist or is not readable.",
                             \quicklisp_suggestions)
     return 1
   endif
